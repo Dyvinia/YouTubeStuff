@@ -1,0 +1,44 @@
+﻿<Window x:Class="YouTubeStuff.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="YoutubeStuff"
+        Width="600" SizeToContent="Height" UseLayoutRounding="True"
+        WindowStartupLocation="CenterScreen"
+        Style="{DynamicResource CustomWindowStyle}" ResizeMode="CanMinimize" >
+    <Grid>
+        <Grid Background="#FF141414" Margin="5,75,5,5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="15"/>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="20"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="1" Margin="25 0">
+                <TextBlock TextWrapping="Wrap" Text="Video Link" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBox Height="20" VerticalAlignment="Bottom" TextChanged="LinkBox_TextChanged"/>
+            </Grid>
+            <Separator Grid.Row="2" Background="#FF323232" VerticalAlignment="Bottom"/>
+            <Grid Grid.Row="3" Margin="25 15 25 25">
+                <StackPanel Orientation="Vertical" Width="240" HorizontalAlignment="Left">
+                    <TextBlock TextWrapping="Wrap" Text="Thumbnail" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                    <Border Height="135" Width="240" BorderThickness="1" BorderBrush="#FF323232">
+                        <Image x:Name="ImageThumbnail" RenderOptions.BitmapScalingMode="HighQuality" />
+                    </Border>
+                    <Grid Margin="0 5 0 0" Height="22" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="5"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" x:Name="ButtonClipboard" Content="Copy To Clipboard" Click="ButtonClipboard_Click" IsEnabled="False"/>
+                        <Button Grid.Column="2" x:Name="ButtonSave" Content="Save" Click="ButtonSave_Click" IsEnabled="False"/>
+                    </Grid>
+                    
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
