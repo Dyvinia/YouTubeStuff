@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using HtmlAgilityPack;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -42,6 +43,13 @@ namespace YouTubeStuff {
             VideoListBox.ItemsSource = Videos;
             VideoListBox.SelectionChanged += (s, e) => UpdateUI();
 
+            ExtensionComboBox.SelectionChanged += ExtensionComboBox_SelectionChanged; ;
+            FormatAudioComboBox.SelectionChanged += (s, e) => Config.Save();
+            FormatVideoComboBox.SelectionChanged += (s, e) => Config.Save();
+            ExtensionComboBox.DataContext = Config.Settings;
+            FormatAudioComboBox.DataContext = Config.Settings;
+            FormatVideoComboBox.DataContext = Config.Settings;
+
             MouseDown += (s, e) => FocusManager.SetFocusedElement(this, this);
         }
 
@@ -64,8 +72,10 @@ namespace YouTubeStuff {
         }
 
         private async Task GenerateList(string[] links, IProgress<int> progress) {
+            Mouse.OverrideCursor = Cursors.Wait;
             Videos.Clear();
             int currentProgress = 1;
+            progress.Report(currentProgress);
 
             foreach (string link in links) {
                 // YouTube
@@ -79,20 +89,22 @@ namespace YouTubeStuff {
                 }
                 // Twitter
                 if (link.Contains("twitter.com")) {
-                    ProcessStartInfo p = new() {
-                        FileName = App.GDL,
-                        CreateNoWindow = true,
-                        Arguments = $"--dump-json " + link,
-                        RedirectStandardOutput = true,
-                    };
-                    Process process = Process.Start(p);
-                    string output = process.StandardOutput.ReadToEnd();
-                    dynamic results = JsonConvert.DeserializeObject<dynamic>(output);
-                    string userImage = results[0][1].user.profile_image;
-                    string tweetContent = results[0][1].content;
-                    tweetContent = tweetContent.Replace("\n", "").Replace("\r", "");
+                    using HttpClient client = new();
+                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://noembed.com/embed?url={link}"));
+                    string html = json.html;
+                    HtmlDocument doc = new();
+                    doc.LoadHtml(html);
 
-                    Videos.Add(new Video { Title = tweetContent, Link = link, Thumbnail = userImage, Site = "Twitter" });
+                    string tweetAuthor = ((string)json.author_url).Split("/").Last();
+                    string tweetContent = $"@{tweetAuthor} - {doc.DocumentNode.SelectNodes("//text()")?.First().InnerText}";
+
+                    string authorImage = $"https://unavatar.io/twitter/{tweetAuthor}";
+
+                    //string userImage = results[0][1].user.profile_image;
+                    //results[0][1].content;
+                    //tweetContent = tweetContent.Replace("\n", "").Replace("\r", "");
+
+                    Videos.Add(new Video { Title = tweetContent, Link = link, Thumbnail = authorImage, Site = "Twitter" });
                 }
                 // Reddit
                 if (link.Contains("reddit.com")) {
@@ -106,6 +118,7 @@ namespace YouTubeStuff {
 
                 progress.Report(currentProgress++);
             }
+            Mouse.OverrideCursor = null;
         }
 
         private void UpdateUI() {
@@ -130,28 +143,49 @@ namespace YouTubeStuff {
 
         private void Download(Video video) {
             using Process downloader = new();
-            if (video.Site == "YouTube") {
-                downloader.StartInfo.FileName = App.YTDL;
-                //p.Arguments = $"-f bestaudio -x --audio-format flac {video.Link} -o \"{App.OutDir}\\%%(title)s.%%(ext)s\"";
-                //p.Arguments = $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{App.OutDir}\\%%(title)s.%%(ext)s\"";
-                downloader.StartInfo.Arguments = $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4  {video.Link} -o \"{App.OutDir}\\{video.Title}\"";
+            downloader.StartInfo.FileName = Config.Settings.YoutubeDL;
+            downloader.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
+            downloader.StartInfo.Arguments += "--newline ";
 
+            if (video.Site == "YouTube") {
+                // Video
+                if (Config.Settings.ExportType == 0) {
+                    // Original
+                    if (Config.Settings.ExportFormatVideo == 0)
+                        downloader.StartInfo.Arguments += $"--format bestvideo+bestaudio {video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+
+                    // MP4
+                    else if (Config.Settings.ExportFormatVideo == 1)
+                        downloader.StartInfo.Arguments += $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 {video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+                }
+                //Audio
+                else if (Config.Settings.ExportType == 1) {
+                    // FLAC
+                    if (Config.Settings.ExportFormatVideo == 0)
+                        downloader.StartInfo.Arguments += $"-f bestaudio -x --audio-format flac {video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+
+                    // MP3
+                    else if (Config.Settings.ExportFormatVideo == 1)
+                        downloader.StartInfo.Arguments += $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+                }
             }
+
             else if (video.Site == "Twitter") {
-                downloader.StartInfo.FileName = App.GDL;
-                downloader.StartInfo.Arguments = $"-D \"{App.OutDir}\" \"{video.Link}\"";
+                downloader.StartInfo.Arguments = $"{video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
             }
+
             else if (video.Site == "Reddit") {
-                downloader.StartInfo.FileName = App.YTDL;
-                downloader.StartInfo.Arguments = $"{video.Link} -o \"{App.OutDir}\\{video.Title}.%(ext)s\"";
+                downloader.StartInfo.Arguments = $"{video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
             }
+
+            if (!Config.Settings.ShowWindows) downloader.StartInfo.CreateNoWindow = true;
             downloader.Start();
             downloader.WaitForExit();
         }
 
         private async void ButtonSave_Click(object sender, RoutedEventArgs e) {
             Video video = VideoListBox.SelectedItem as Video;
-            SaveFileDialog saveFileDialog = new() { InitialDirectory = App.OutDir, Filter = "Image|*.*" };
+            SaveFileDialog saveFileDialog = new() { InitialDirectory = Config.Settings.OutDir, Filter = "Image|*.*" };
             if (saveFileDialog.ShowDialog() == true) {
                 using HttpClient httpClient = new();
                 string fileExtension = Path.GetExtension(video.Thumbnail);
@@ -169,17 +203,66 @@ namespace YouTubeStuff {
             Clipboard.SetDataObject(data, true);
         }
 
-        private void DownloadAllButton_Click(object sender, RoutedEventArgs e) {
-            Parallel.ForEach(Videos, video => {
-                Download(video);
+        private async void DownloadAllButton_Click(object sender, RoutedEventArgs e) {
+            Mouse.OverrideCursor = Cursors.Wait;
+
+            IProgress<int> progress = new Progress<int>(p => {
+                ProgressBar.Value = p;
+                ProgressBar.Maximum = Videos.Count;
             });
-            Process.Start(new ProcessStartInfo(App.OutDir) { UseShellExecute = true });
+
+            int currentProgress = 1;
+            progress.Report(currentProgress);
+            ProgressBar.Visibility = Visibility.Visible;
+            await Task.Run(async () => {
+                Parallel.ForEach(Videos, video => {
+                    Download(video);
+                    progress.Report(currentProgress++);
+                });
+                await Task.Delay(200);
+            });
+            ProgressBar.Visibility = Visibility.Collapsed;
+
+            Mouse.OverrideCursor = null;
+
+            Process.Start(new ProcessStartInfo(Config.Settings.OutDir) { UseShellExecute = true });
         }
 
-        private void ListBoxDownloadVideo_Click(object sender, RoutedEventArgs e) {
+        private async void ListBoxDownloadVideo_Click(object sender, RoutedEventArgs e) {
             Video video = ((Button)sender).DataContext as Video;
-            Download(video);
-            Process.Start(new ProcessStartInfo(App.OutDir) { UseShellExecute = true });
+
+            Mouse.OverrideCursor = Cursors.Wait;
+
+            IProgress<int> progress = new Progress<int>(p => {
+                ProgressBar.Value = p;
+                ProgressBar.Maximum = 12;
+            });
+
+            progress.Report(1); 
+            ProgressBar.Visibility = Visibility.Visible;
+            await Task.Run(async () => {
+                Download(video);
+                progress.Report(12);
+                await Task.Delay(200);
+            });
+            ProgressBar.Visibility = Visibility.Collapsed;
+
+            Mouse.OverrideCursor = null;
+
+            Process.Start(new ProcessStartInfo(Config.Settings.OutDir) { UseShellExecute = true });
+        }
+
+        private void ExtensionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            Config.Save();
+
+            if (Config.Settings.ExportType == 0) {
+                FormatVideoComboBox.Visibility = Visibility.Visible;
+                FormatAudioComboBox.Visibility = Visibility.Collapsed;
+            }
+            else if (Config.Settings.ExportType == 1) {
+                FormatVideoComboBox.Visibility = Visibility.Collapsed;
+                FormatAudioComboBox.Visibility = Visibility.Visible;
+            }
         }
 
         protected override void OnKeyDown(KeyEventArgs e) {

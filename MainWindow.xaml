@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:YouTubeStuff"
         mc:Ignorable="d"
         Title="YoutubeStuff"
         Width="650" SizeToContent="Height" UseLayoutRounding="True"
@@ -12,13 +13,45 @@
         <Grid Background="#FF141414" Margin="5,75,5,5">
             <Grid.RowDefinitions>
                 <RowDefinition Height="15"/>
-                <RowDefinition Height="80"/>
+                <RowDefinition Height="84"/>
                 <RowDefinition Height="20"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid Grid.Row="1" Margin="25 0">
-                <TextBlock TextWrapping="Wrap" Text="Video Links" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
-                <TextBox x:Name="LinkBox" Height="60" VerticalAlignment="Bottom" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" TextWrapping="Wrap"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="400"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0">
+                    <TextBlock TextWrapping="Wrap" Text="Video Links" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                    <TextBox x:Name="LinkBox" Height="64" VerticalAlignment="Bottom" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" TextWrapping="Wrap"/>
+                </Grid>
+                <Grid Grid.Column="1">
+                    <DockPanel Margin="15 0 0 0">
+                        <StackPanel Orientation="Vertical" DockPanel.Dock="Top">
+                            <TextBlock TextWrapping="Wrap" Text="Export As" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                            <ComboBox x:Name="ExtensionComboBox" SelectedIndex="{Binding Path=(local:Config.ExportType), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ComboBoxItem Content="Video"/>
+                                <ComboBoxItem Content="Audio"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom">
+                            <TextBlock TextWrapping="Wrap" Text="File Format" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                            <Grid>
+                                <ComboBox x:Name="FormatVideoComboBox" Visibility="Collapsed" SelectedIndex="{Binding Path=(local:Config.ExportFormatVideo), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <ComboBoxItem Content="Original"/>
+                                    <ComboBoxItem Content="MP4"/>
+                                </ComboBox>
+                                <ComboBox x:Name="FormatAudioComboBox" Visibility="Collapsed" SelectedIndex="{Binding Path=(local:Config.ExportFormatAudio), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <ComboBoxItem Content="FLAC"/>
+                                    <ComboBoxItem Content="MP3"/>
+                                </ComboBox>
+                            </Grid>
+                            
+                        </StackPanel>
+                    </DockPanel>
+                </Grid>
+               
             </Grid>
             <Separator Grid.Row="2" Background="#FF323232" VerticalAlignment="Bottom"/>
             <Grid Grid.Row="3" Margin="25 15 25 25">

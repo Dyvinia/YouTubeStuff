@@ -8,17 +8,20 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using PropertyChanged;
 using YouTubeStuff.Dialogs;
 using YouTubeStuff.SettingsManager;
 
 namespace YouTubeStuff {
 
-    [AddINotifyPropertyChangedInterface]
     public class Config : SettingsManager<Config> {
         public int ExportType { get; set; } = 0;
         public int ExportFormatAudio { get; set; } = 0;
         public int ExportFormatVideo { get; set; } = 0;
+        public bool ShowWindows { get; set; } = false;
+        public string AdditionalArgs { get; set; }
+
+        public string OutDir { get; set; } = App.BaseDir + "Output";
+        public string YoutubeDL { get; set; } = App.BaseDir + "yt-dlp.exe";
     }
 
     /// <summary>
@@ -29,14 +32,12 @@ namespace YouTubeStuff {
         public static readonly string Version = "v" + Assembly.GetExecutingAssembly().GetName().Version.ToString()[..5];
 
         public static readonly string BaseDir = AppDomain.CurrentDomain.BaseDirectory;
-        public static readonly string OutDir = BaseDir + "Output";
-        public static readonly string YTDL = BaseDir + "yt-dlp.exe";
-        public static readonly string GDL = BaseDir + "gallery-dl.exe";
+        
 
         public App() {
             Config.Load();
 
-            Directory.CreateDirectory(OutDir);
+            Directory.CreateDirectory(Config.Settings.OutDir);
 
             DispatcherUnhandledException += Application_DispatcherUnhandledException;
         }
