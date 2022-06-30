@@ -29,7 +29,7 @@
 
                 <StackPanel Orientation="Vertical">
                     <TextBlock TextWrapping="Wrap" Text="Videos" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
-                    <ListBox x:Name="VideoListBox" Height="200" HorizontalContentAlignment="Stretch" Background="#FF141414" BorderBrush="#FF323232" Foreground="#FFF1F1F1" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
+                    <ListBox x:Name="VideoListBox" Height="185" HorizontalContentAlignment="Stretch" Background="#FF141414" BorderBrush="#FF323232" Foreground="#FFF1F1F1" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid ToolTip="{Binding Site}">

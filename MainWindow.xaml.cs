@@ -77,6 +77,7 @@ namespace YouTubeStuff {
 
                     Videos.Add(new Video { Title = videoTitle, Link = link, Thumbnail = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg", Site = "YouTube" });
                 }
+                // Twitter
                 if (link.Contains("twitter.com")) {
                     ProcessStartInfo p = new() {
                         FileName = App.GDL,
@@ -92,6 +93,15 @@ namespace YouTubeStuff {
                     tweetContent = tweetContent.Replace("\n", "").Replace("\r", "");
 
                     Videos.Add(new Video { Title = tweetContent, Link = link, Thumbnail = userImage, Site = "Twitter" });
+                }
+                // Reddit
+                if (link.Contains("reddit.com")) {
+                    using HttpClient client = new();
+                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{link}.json"));
+                    string videoTitle = json[0].data.children[0].data.title;
+                    string videoThumbnail = json[0].data.children[0].data.thumbnail;
+
+                    Videos.Add(new Video { Title = videoTitle, Link = link, Thumbnail = videoThumbnail, Site = "Reddit" });
                 }
 
                 progress.Report(currentProgress++);
