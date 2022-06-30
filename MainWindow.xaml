@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="YoutubeStuff"
-        Width="600" SizeToContent="Height" UseLayoutRounding="True"
+        Width="650" SizeToContent="Height" UseLayoutRounding="True"
         WindowStartupLocation="CenterScreen"
         Style="{DynamicResource CustomWindowStyle}" ResizeMode="CanMinimize" >
     <Grid>
@@ -17,28 +17,140 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid Grid.Row="1" Margin="25 0">
-                <TextBlock TextWrapping="Wrap" Text="Video Link" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock TextWrapping="Wrap" Text="Video Links" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
                 <TextBox Height="20" VerticalAlignment="Bottom" TextChanged="LinkBox_TextChanged"/>
             </Grid>
             <Separator Grid.Row="2" Background="#FF323232" VerticalAlignment="Bottom"/>
             <Grid Grid.Row="3" Margin="25 15 25 25">
-                <StackPanel Orientation="Vertical" Width="240" HorizontalAlignment="Left">
-                    <TextBlock TextWrapping="Wrap" Text="Thumbnail" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
-                    <Border Height="135" Width="240" BorderThickness="1" BorderBrush="#FF323232">
-                        <Image x:Name="ImageThumbnail" RenderOptions.BitmapScalingMode="HighQuality" />
-                    </Border>
-                    <Grid Margin="0 5 0 0" Height="22" >
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="140"/>
-                            <ColumnDefinition Width="5"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Grid.Column="0" x:Name="ButtonClipboard" Content="Copy To Clipboard" Click="ButtonClipboard_Click" IsEnabled="False"/>
-                        <Button Grid.Column="2" x:Name="ButtonSave" Content="Save" Click="ButtonSave_Click" IsEnabled="False"/>
-                    </Grid>
-                    
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="280"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Vertical">
+                    <TextBlock TextWrapping="Wrap" Text="Videos" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                    <ListBox x:Name="VideoListBox" Height="200" HorizontalContentAlignment="Stretch" Background="#FF141414" BorderBrush="#FF323232" Foreground="#FFF1F1F1" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="1"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="1"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="1"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="1"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{Binding Title}" VerticalAlignment="Center" ToolTip="{Binding Title}"/>
+
+                                    <!--<Button x:Name="AnalyzeAudio" Grid.Column="2" Click="AnalyzeAudio_Click" ToolTip="Analyse Loudness and True Peak of an audio file (LUFS &amp; dB)" Background="Transparent">
+                                    <Image Source="Resources/info.png"/>
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Opacity" Value="0.6"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Opacity" Value="0.4"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button x:Name="openAudioFolder" Grid.Column="4" Click="OpenAudioFolder_Click" ToolTip="Opens Folder" Background="Transparent">
+                                    <Image Source="Resources/folder.png"/>
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Opacity" Value="0.6"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Opacity" Value="0.4"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button x:Name="playAudio" Grid.Column="6" Click="PlayAudio_Click" ToolTip="Plays Audio File">
+                                    <Image Source="Resources/play.png" />
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Setter Property="Cursor" Value="Hand"/>
+                                            <Setter Property="Background" Value="#00000000"/>
+                                            <Setter Property="Foreground" Value="#FFF1F1F1"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Opacity" Value="0.6"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Opacity" Value="0.4"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>-->
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
                 </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Vertical">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Right">
+                        <TextBlock TextWrapping="Wrap" Text="Title" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                        <TextBox x:Name="TitleBox" Height="20" Width="240" IsReadOnly="True" IsReadOnlyCaretVisible="False"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Vertical" Width="240" HorizontalAlignment="Right" Margin="0 10 0 0">
+                        <TextBlock TextWrapping="Wrap" Text="Thumbnail" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                        <Border Height="135" Width="240" BorderThickness="1" BorderBrush="#FF323232">
+                            <Image x:Name="ImageThumbnail" RenderOptions.BitmapScalingMode="HighQuality" />
+                        </Border>
+                        <Grid Margin="0 5 0 0" Height="22" >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="5"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" x:Name="ButtonClipboard" Content="Copy To Clipboard" Click="ButtonClipboard_Click" IsEnabled="False"/>
+                            <Button Grid.Column="2" x:Name="ButtonSave" Content="Save" Click="ButtonSave_Click" IsEnabled="False"/>
+                        </Grid>
+
+                    </StackPanel>
+                </StackPanel>
+                
             </Grid>
         </Grid>
+
+        <ProgressBar x:Name="ProgressBar" Height="5" VerticalAlignment="Bottom" Background="Transparent" Foreground="White" BorderThickness="0"/>
     </Grid>
 </Window>

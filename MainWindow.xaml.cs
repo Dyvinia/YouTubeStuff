@@ -1,6 +1,8 @@
 ﻿using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net.Cache;
@@ -23,40 +25,66 @@ namespace YouTubeStuff {
     /// </summary>
     public partial class MainWindow : Window {
 
-        public string ThumbnailURL;
+        public class Video {
+            public string Title { get; set; }
+            public string Thumbnail { get; set; }
+        }
+        public ObservableCollection<Video> Videos = new();
 
         public MainWindow() {
             InitializeComponent();
 
+            VideoListBox.ItemsSource = Videos;
+            VideoListBox.SelectionChanged += (s, e) => UpdateUI();
+
             MouseDown += (s, e) => FocusManager.SetFocusedElement(this, this);
         }
 
-        private void LinkBox_TextChanged(object sender, TextChangedEventArgs e) {
+        private async void LinkBox_TextChanged(object sender, TextChangedEventArgs e) {
             string text = (sender as TextBox).Text;
+            string[] strings = String.Concat(text.Where(c => !Char.IsWhiteSpace(c))).Split(",");
+            string[] links = strings.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute)).ToArray();
 
-            if (Uri.IsWellFormedUriString(text, UriKind.Absolute)) {
-                Uri uri = new(text);
+            IProgress<int> progress = new Progress<int>(p => {
+                ProgressBar.Value = p;
+                ProgressBar.Maximum = strings.Length;
+            });
 
-                if (text.Contains("www.youtube.com/watch?v=")) {
-                    string videoID = HttpUtility.ParseQueryString(uri.Query).Get("v");
+            ProgressBar.Visibility = Visibility.Visible;
+            await GenerateList(strings, progress);
+            ProgressBar.Visibility = Visibility.Collapsed;
 
+            if (Videos.Count > 0) VideoListBox.SelectedIndex = 0;
 
-                    ThumbnailURL = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg";
+            UpdateUI();
+        }
+
+        private async Task GenerateList(string[] links, IProgress<int> progress) {
+            Videos.Clear();
+            int currentProgress = 1;
+
+            foreach (string link in links) {
+                // Youtube
+                if (link.Contains("youtu")) {
+                    using HttpClient client = new();
+                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://noembed.com/embed?url={link}"));
+                    string videoTitle = json.title;
+                    string videoID = ((string)json.thumbnail_url).Split("/")[^2];
+
+                    Videos.Add(new Video { Title = videoTitle, Thumbnail = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg" });
                 }
-                else if (text.Contains("youtu.be/")) {
-                    string videoID = text.Split("/").Last();
 
-                    ThumbnailURL = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg";
-                    
-                }
-
-                ImageThumbnail.Source = new BitmapImage(new Uri(ThumbnailURL));
+                progress.Report(currentProgress++);
             }
-            else {
-                ImageThumbnail.Source = null;
-            }
+        }
 
-            if (String.IsNullOrEmpty(ThumbnailURL)) {
+        private void UpdateUI() {
+            if (VideoListBox.SelectedItem is not Video video) return;
+
+            ImageThumbnail.Source = new BitmapImage(new Uri(video.Thumbnail));
+            TitleBox.Text = video.Title;
+
+            if (String.IsNullOrEmpty(video.Thumbnail)) {
                 ButtonClipboard.IsEnabled = false;
                 ButtonSave.IsEnabled = false;
             }
@@ -67,20 +95,22 @@ namespace YouTubeStuff {
         }
 
         private async void ButtonSave_Click(object sender, RoutedEventArgs e) {
+            Video video = VideoListBox.SelectedItem as Video;
             SaveFileDialog saveFileDialog = new() { InitialDirectory = App.OutDir, Filter = "Image|*.*" };
             if (saveFileDialog.ShowDialog() == true) {
                 using HttpClient httpClient = new();
-                string fileExtension = Path.GetExtension(ThumbnailURL);
+                string fileExtension = Path.GetExtension(video.Thumbnail);
                 string finalPath = $"{saveFileDialog.FileName}{fileExtension}";
 
-                byte[] imageBytes = await httpClient.GetByteArrayAsync(new Uri(ThumbnailURL));
+                byte[] imageBytes = await httpClient.GetByteArrayAsync(new Uri(video.Thumbnail));
                 await File.WriteAllBytesAsync(finalPath, imageBytes);
             }
         }
 
         private void ButtonClipboard_Click(object sender, RoutedEventArgs e) {
+            Video video = VideoListBox.SelectedItem as Video;
             IDataObject data = new DataObject();
-            data.SetData(DataFormats.Bitmap, new BitmapImage(new Uri(ThumbnailURL)), true);
+            data.SetData(DataFormats.Bitmap, new BitmapImage(new Uri(video.Thumbnail)), true);
             Clipboard.SetDataObject(data, true);
         }
     }
