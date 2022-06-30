@@ -12,13 +12,13 @@
         <Grid Background="#FF141414" Margin="5,75,5,5">
             <Grid.RowDefinitions>
                 <RowDefinition Height="15"/>
-                <RowDefinition Height="40"/>
+                <RowDefinition Height="80"/>
                 <RowDefinition Height="20"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid Grid.Row="1" Margin="25 0">
                 <TextBlock TextWrapping="Wrap" Text="Video Links" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
-                <TextBox x:Name="LinkBox" Height="20" VerticalAlignment="Bottom"/>
+                <TextBox x:Name="LinkBox" Height="60" VerticalAlignment="Bottom" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" TextWrapping="Wrap"/>
             </Grid>
             <Separator Grid.Row="2" Background="#FF323232" VerticalAlignment="Bottom"/>
             <Grid Grid.Row="3" Margin="25 15 25 25">
@@ -37,7 +37,7 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="4"/>
+                                        <ColumnDefinition Width="2"/>
                                     </Grid.ColumnDefinitions>
 
                                     <Grid Grid.Column="0" Height="22" Width="40">

@@ -181,5 +181,11 @@ namespace YouTubeStuff {
             Download(video);
             Process.Start(new ProcessStartInfo(App.OutDir) { UseShellExecute = true });
         }
+
+        protected override void OnKeyDown(KeyEventArgs e) {
+            base.OnKeyDown(e);
+            if (e.Key == Key.Return)
+                FocusManager.SetFocusedElement(this, this);
+        }
     }
 }
