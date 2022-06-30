@@ -66,7 +66,7 @@ namespace YouTubeStuff {
 
             List<Link> links = new();
 
-            foreach (string link in strings.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute)).ToList()) {
+            foreach (string link in strings.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute))) {
                 if (link.Contains("youtu") && link.Contains("playlist")) {
                     Mouse.OverrideCursor = Cursors.Wait;
                     ProcessStartInfo p = new() {
