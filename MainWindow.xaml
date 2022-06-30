@@ -34,94 +34,18 @@
                             <DataTemplate>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="1"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="1"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="1"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="1"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <TextBlock Grid.Column="0" Text="{Binding Title}" VerticalAlignment="Center" ToolTip="{Binding Title}"/>
-
-                                    <!--<Button x:Name="AnalyzeAudio" Grid.Column="2" Click="AnalyzeAudio_Click" ToolTip="Analyse Loudness and True Peak of an audio file (LUFS &amp; dB)" Background="Transparent">
-                                    <Image Source="Resources/info.png"/>
-                                    <Button.Style>
-                                        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Opacity" Value="0.6"/>
-                                                </Trigger>
-                                                <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Opacity" Value="0.4"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="{x:Type Button}">
-                                            <Border Background="{TemplateBinding Background}">
-                                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-
-                                <Button x:Name="openAudioFolder" Grid.Column="4" Click="OpenAudioFolder_Click" ToolTip="Opens Folder" Background="Transparent">
-                                    <Image Source="Resources/folder.png"/>
-                                    <Button.Style>
-                                        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Opacity" Value="0.6"/>
-                                                </Trigger>
-                                                <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Opacity" Value="0.4"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="{x:Type Button}">
-                                            <Border Background="{TemplateBinding Background}">
-                                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-
-                                <Button x:Name="playAudio" Grid.Column="6" Click="PlayAudio_Click" ToolTip="Plays Audio File">
-                                    <Image Source="Resources/play.png" />
-                                    <Button.Style>
-                                        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
-                                            <Setter Property="Cursor" Value="Hand"/>
-                                            <Setter Property="Background" Value="#00000000"/>
-                                            <Setter Property="Foreground" Value="#FFF1F1F1"/>
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Opacity" Value="0.6"/>
-                                                </Trigger>
-                                                <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Opacity" Value="0.4"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="{x:Type Button}">
-                                            <Border Background="{TemplateBinding Background}">
-                                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>-->
+                                    <Image Grid.Column="0" Source="{Binding Thumbnail}" Height="22" Margin="1" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="4 0 0 0" VerticalAlignment="Center" ToolTip="{Binding Title}"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
 
+                    <Button Content="Download All" Height="22" Margin="0 5 0 0"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Vertical">
