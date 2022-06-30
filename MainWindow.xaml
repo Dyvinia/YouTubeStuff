@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:YouTubeStuff"
         mc:Ignorable="d"
         Title="YoutubeStuff"
-        Width="650" SizeToContent="Height" UseLayoutRounding="True"
+        Width="700" SizeToContent="Height" UseLayoutRounding="True"
         WindowStartupLocation="CenterScreen"
         Icon="Resources/Icon.ico"
         Style="{DynamicResource CustomWindowStyle}" ResizeMode="CanMinimize" >
@@ -17,36 +17,48 @@
         <Grid Background="#FF141414" Margin="5">
             <Grid.RowDefinitions>
                 <RowDefinition Height="15"/>
-                <RowDefinition Height="84"/>
+                <RowDefinition Height="90"/>
                 <RowDefinition Height="20"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid Grid.Row="1" Margin="25 0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="400"/>
+                    <ColumnDefinition Width="500"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid Grid.Column="0">
                     <TextBlock TextWrapping="Wrap" Text="Video Links" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
-                    <TextBox x:Name="LinkBox" Height="64" VerticalAlignment="Bottom" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" TextWrapping="Wrap"/>
+                    <TextBox x:Name="LinkBox" Height="70" VerticalAlignment="Bottom" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" TextWrapping="Wrap"/>
+                    <TextBlock IsHitTestVisible="False" Text="Paste Here..." Height="68" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="4,0,0,0" Opacity="0.25">
+                        <TextBlock.Style>
+                            <Style TargetType="{x:Type TextBlock}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=LinkBox}" Value="">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </Grid>
                 <Grid Grid.Column="1">
                     <DockPanel Margin="15 0 0 0">
                         <StackPanel Orientation="Vertical" DockPanel.Dock="Top">
                             <TextBlock TextWrapping="Wrap" Text="Export As" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
-                            <ComboBox x:Name="ExtensionComboBox" SelectedIndex="{Binding Path=(local:Config.ExportType), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <ComboBox x:Name="ExtensionComboBox" SelectedIndex="{Binding Path=(local:Config.ExportType), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="Only applies to YouTube Videos">
                                 <ComboBoxItem Content="Video"/>
                                 <ComboBoxItem Content="Audio"/>
                             </ComboBox>
                         </StackPanel>
-                        <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom">
+                        <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
                             <TextBlock TextWrapping="Wrap" Text="File Format" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
                             <Grid>
-                                <ComboBox x:Name="FormatVideoComboBox" Visibility="Visible" SelectedIndex="{Binding Path=(local:Config.ExportFormatVideo), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ComboBox x:Name="FormatVideoComboBox" Visibility="Visible" SelectedIndex="{Binding Path=(local:Config.ExportFormatVideo), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="Only applies to YouTube Videos">
                                     <ComboBoxItem Content="Original"/>
                                     <ComboBoxItem Content="MP4"/>
                                 </ComboBox>
-                                <ComboBox x:Name="FormatAudioComboBox" Visibility="Collapsed" SelectedIndex="{Binding Path=(local:Config.ExportFormatAudio), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ComboBox x:Name="FormatAudioComboBox" Visibility="Collapsed" SelectedIndex="{Binding Path=(local:Config.ExportFormatAudio), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="Only applies to YouTube Videos">
                                     <ComboBoxItem Content="FLAC"/>
                                     <ComboBoxItem Content="MP3"/>
                                 </ComboBox>
