@@ -18,6 +18,8 @@ namespace YouTubeStuff {
 
         public static readonly string BaseDir = AppDomain.CurrentDomain.BaseDirectory;
         public static readonly string OutDir = BaseDir + "Output";
+        public static readonly string YTDL = BaseDir + "yt-dlp.exe";
+        public static readonly string GDL = BaseDir + "gallery-dl.exe";
 
         public App() {
 

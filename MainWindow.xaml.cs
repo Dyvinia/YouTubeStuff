@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Cache;
@@ -27,12 +28,16 @@ namespace YouTubeStuff {
 
         public class Video {
             public string Title { get; set; }
+            public string Link { get; set; }
             public string Thumbnail { get; set; }
+            public string Site { get; set; }
         }
         public ObservableCollection<Video> Videos = new();
 
         public MainWindow() {
             InitializeComponent();
+
+            LinkBox.LostFocus += (s, e) => LinkChanged();
 
             VideoListBox.ItemsSource = Videos;
             VideoListBox.SelectionChanged += (s, e) => UpdateUI();
@@ -40,9 +45,8 @@ namespace YouTubeStuff {
             MouseDown += (s, e) => FocusManager.SetFocusedElement(this, this);
         }
 
-        private async void LinkBox_TextChanged(object sender, TextChangedEventArgs e) {
-            string text = (sender as TextBox).Text;
-            string[] strings = String.Concat(text.Where(c => !Char.IsWhiteSpace(c))).Split(",");
+        private async void LinkChanged() {
+            string[] strings = String.Concat(LinkBox.Text.Where(c => !Char.IsWhiteSpace(c))).Split(",");
             string[] links = strings.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute)).ToArray();
 
             IProgress<int> progress = new Progress<int>(p => {
@@ -64,14 +68,30 @@ namespace YouTubeStuff {
             int currentProgress = 1;
 
             foreach (string link in links) {
-                // Youtube
+                // YouTube
                 if (link.Contains("youtu")) {
                     using HttpClient client = new();
                     dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://noembed.com/embed?url={link}"));
                     string videoTitle = json.title;
                     string videoID = ((string)json.thumbnail_url).Split("/")[^2];
 
-                    Videos.Add(new Video { Title = videoTitle, Thumbnail = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg" });
+                    Videos.Add(new Video { Title = videoTitle, Link = link, Thumbnail = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg", Site = "YouTube" });
+                }
+                if (link.Contains("twitter.com")) {
+                    ProcessStartInfo p = new() {
+                        FileName = App.GDL,
+                        CreateNoWindow = true,
+                        Arguments = $"--dump-json " + link,
+                        RedirectStandardOutput = true,
+                    };
+                    Process process = Process.Start(p);
+                    string output = process.StandardOutput.ReadToEnd();
+                    dynamic results = JsonConvert.DeserializeObject<dynamic>(output);
+                    string userImage = results[0][1].user.profile_image;
+                    string tweetContent = results[0][1].content;
+                    tweetContent = tweetContent.Replace("\n", "").Replace("\r", "");
+
+                    Videos.Add(new Video { Title = tweetContent, Link = link, Thumbnail = userImage, Site = "Twitter" });
                 }
 
                 progress.Report(currentProgress++);
@@ -79,7 +99,11 @@ namespace YouTubeStuff {
         }
 
         private void UpdateUI() {
-            if (VideoListBox.SelectedItem is not Video video) return;
+            if (VideoListBox.SelectedItem is not Video video) {
+                ImageThumbnail.Source = null;
+                TitleBox.Text = null;
+                return;
+            }
 
             ImageThumbnail.Source = new BitmapImage(new Uri(video.Thumbnail));
             TitleBox.Text = video.Title;
