@@ -78,10 +78,24 @@ namespace YouTubeStuff {
             progress.Report(currentProgress);
 
             foreach (string link in links) {
+                //if (link.Contains("youtu") && link.Contains("playlist")) {
+                //    ProcessStartInfo p = new() {
+                //        FileName = Config.Settings.YoutubeDL,
+                //        CreateNoWindow = true,
+                //        Arguments = $"-j --flat-playlist {link}",
+                //        RedirectStandardOutput = true,
+                //    };
+                //    Process process = Process.Start(p);
+                //    string test = process.StandardOutput.ReadToEnd()
+                //    dynamic json = JsonConvert.DeserializeObject<dynamic>();
+                //}
+
+
+
                 // YouTube
                 if (link.Contains("youtu")) {
                     using HttpClient client = new();
-                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://noembed.com/embed?url={link}"));
+                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://youtube.com/oembed?url={link}"));
                     string videoTitle = json.title;
                     string videoID = ((string)json.thumbnail_url).Split("/")[^2];
 
@@ -97,12 +111,7 @@ namespace YouTubeStuff {
 
                     string tweetAuthor = ((string)json.author_url).Split("/").Last();
                     string tweetContent = $"@{tweetAuthor} - {doc.DocumentNode.SelectNodes("//text()")?.First().InnerText}";
-
                     string authorImage = $"https://unavatar.io/twitter/{tweetAuthor}";
-
-                    //string userImage = results[0][1].user.profile_image;
-                    //results[0][1].content;
-                    //tweetContent = tweetContent.Replace("\n", "").Replace("\r", "");
 
                     Videos.Add(new Video { Title = tweetContent, Link = link, Thumbnail = authorImage, Site = "Twitter" });
                 }
@@ -142,6 +151,9 @@ namespace YouTubeStuff {
         }
 
         private void Download(Video video) {
+            string outDir = Config.Settings.OutDir;
+            if (video.Link.Contains("playlist")) outDir += $"\\{video.Title}\\";
+
             using Process downloader = new();
             downloader.StartInfo.FileName = Config.Settings.YoutubeDL;
             downloader.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
@@ -152,21 +164,21 @@ namespace YouTubeStuff {
                 if (Config.Settings.ExportType == 0) {
                     // Original
                     if (Config.Settings.ExportFormatVideo == 0)
-                        downloader.StartInfo.Arguments += $"--format bestvideo+bestaudio {video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+                        downloader.StartInfo.Arguments += $"--format bestvideo+bestaudio {video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
 
                     // MP4
                     else if (Config.Settings.ExportFormatVideo == 1)
-                        downloader.StartInfo.Arguments += $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 {video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+                        downloader.StartInfo.Arguments += $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 {video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
                 }
                 //Audio
                 else if (Config.Settings.ExportType == 1) {
                     // FLAC
                     if (Config.Settings.ExportFormatVideo == 0)
-                        downloader.StartInfo.Arguments += $"-f bestaudio -x --audio-format flac {video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+                        downloader.StartInfo.Arguments += $"-f bestaudio -x --audio-format flac {video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
 
                     // MP3
                     else if (Config.Settings.ExportFormatVideo == 1)
-                        downloader.StartInfo.Arguments += $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+                        downloader.StartInfo.Arguments += $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
                 }
             }
 

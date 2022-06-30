@@ -38,7 +38,7 @@
                         <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom">
                             <TextBlock TextWrapping="Wrap" Text="File Format" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
                             <Grid>
-                                <ComboBox x:Name="FormatVideoComboBox" Visibility="Collapsed" SelectedIndex="{Binding Path=(local:Config.ExportFormatVideo), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ComboBox x:Name="FormatVideoComboBox" Visibility="Visible" SelectedIndex="{Binding Path=(local:Config.ExportFormatVideo), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                     <ComboBoxItem Content="Original"/>
                                     <ComboBoxItem Content="MP4"/>
                                 </ComboBox>
