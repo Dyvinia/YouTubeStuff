@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Net.Cache;
 using System.Net.Http;
 using System.Text;
@@ -20,6 +21,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
+using System.Windows.Shell;
 
 namespace YouTubeStuff {
     /// <summary>
@@ -32,8 +34,14 @@ namespace YouTubeStuff {
             public string Link { get; set; }
             public string Thumbnail { get; set; }
             public string Site { get; set; }
+            public string Playlist { get; set; }
         }
         public ObservableCollection<Video> Videos = new();
+
+        public class Link {
+            public string URL { get; set; }
+            public string Playlist { get; set; }
+        }
 
         public MainWindow() {
             InitializeComponent();
@@ -55,15 +63,44 @@ namespace YouTubeStuff {
 
         private async void LinkChanged() {
             string[] strings = String.Concat(LinkBox.Text.Where(c => !Char.IsWhiteSpace(c))).Split(",");
-            string[] links = strings.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute)).ToArray();
+
+            List<Link> links = new();
+
+            foreach (string link in strings.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute)).ToList()) {
+                if (link.Contains("youtu") && link.Contains("playlist")) {
+                    Mouse.OverrideCursor = Cursors.Wait;
+                    ProcessStartInfo p = new() {
+                        FileName = Config.Settings.YoutubeDL,
+                        CreateNoWindow = true,
+                        Arguments = $"-j --flat-playlist {link}",
+                        RedirectStandardOutput = true,
+                    };
+                    Process process = Process.Start(p);
+                    string output = process.StandardOutput.ReadToEnd();
+                    output = $"[{output.Replace("\n", ",")}]";
+                    output = output.Remove(output.LastIndexOf(","), 1);
+                    dynamic[] json = JsonConvert.DeserializeObject<dynamic[]>(output);
+
+                    using HttpClient client = new();
+                    string playlistTitle = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://youtube.com/oembed?url={link}")).title;
+
+                    foreach (dynamic item in json) {
+                        links.Add(new Link { URL = (string)item.url, Playlist = playlistTitle });
+                    }
+                    Mouse.OverrideCursor = null;
+                }
+                else {
+                    links.Add(new Link { URL = link });
+                }
+            }
 
             IProgress<int> progress = new Progress<int>(p => {
                 ProgressBar.Value = p;
-                ProgressBar.Maximum = strings.Length;
+                ProgressBar.Maximum = links.Count;
             });
 
             ProgressBar.Visibility = Visibility.Visible;
-            await GenerateList(strings, progress);
+            await GenerateList(links, progress);
             ProgressBar.Visibility = Visibility.Collapsed;
 
             if (Videos.Count > 0) VideoListBox.SelectedIndex = 0;
@@ -71,40 +108,26 @@ namespace YouTubeStuff {
             UpdateUI();
         }
 
-        private async Task GenerateList(string[] links, IProgress<int> progress) {
+        private async Task GenerateList(List<Link> links, IProgress<int> progress) {
             Mouse.OverrideCursor = Cursors.Wait;
             Videos.Clear();
             int currentProgress = 1;
             progress.Report(currentProgress);
 
-            foreach (string link in links) {
-                //if (link.Contains("youtu") && link.Contains("playlist")) {
-                //    ProcessStartInfo p = new() {
-                //        FileName = Config.Settings.YoutubeDL,
-                //        CreateNoWindow = true,
-                //        Arguments = $"-j --flat-playlist {link}",
-                //        RedirectStandardOutput = true,
-                //    };
-                //    Process process = Process.Start(p);
-                //    string test = process.StandardOutput.ReadToEnd()
-                //    dynamic json = JsonConvert.DeserializeObject<dynamic>();
-                //}
-
-
-
+            foreach (Link link in links) {
                 // YouTube
-                if (link.Contains("youtu")) {
+                if (link.URL.Contains("youtu")) {
                     using HttpClient client = new();
-                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://youtube.com/oembed?url={link}"));
+                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://youtube.com/oembed?url={link.URL}"));
                     string videoTitle = json.title;
                     string videoID = ((string)json.thumbnail_url).Split("/")[^2];
 
-                    Videos.Add(new Video { Title = videoTitle, Link = link, Thumbnail = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg", Site = "YouTube" });
+                    Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg", Site = "YouTube", Playlist = link.Playlist });
                 }
                 // Twitter
-                if (link.Contains("twitter.com")) {
+                if (link.URL.Contains("twitter.com")) {
                     using HttpClient client = new();
-                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://noembed.com/embed?url={link}"));
+                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://noembed.com/embed?url={link.URL}"));
                     string html = json.html;
                     HtmlDocument doc = new();
                     doc.LoadHtml(html);
@@ -113,16 +136,16 @@ namespace YouTubeStuff {
                     string tweetContent = $"@{tweetAuthor} - {doc.DocumentNode.SelectNodes("//text()")?.First().InnerText}";
                     string authorImage = $"https://unavatar.io/twitter/{tweetAuthor}";
 
-                    Videos.Add(new Video { Title = tweetContent, Link = link, Thumbnail = authorImage, Site = "Twitter" });
+                    Videos.Add(new Video { Title = tweetContent, Link = link.URL, Thumbnail = authorImage, Site = "Twitter" });
                 }
                 // Reddit
-                if (link.Contains("reddit.com")) {
+                if (link.URL.Contains("reddit.com")) {
                     using HttpClient client = new();
-                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{link}.json"));
+                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{link.URL}.json"));
                     string videoTitle = json[0].data.children[0].data.title;
                     string videoThumbnail = json[0].data.children[0].data.thumbnail;
 
-                    Videos.Add(new Video { Title = videoTitle, Link = link, Thumbnail = videoThumbnail, Site = "Reddit" });
+                    Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Reddit" });
                 }
 
                 progress.Report(currentProgress++);
@@ -152,7 +175,7 @@ namespace YouTubeStuff {
 
         private void Download(Video video) {
             string outDir = Config.Settings.OutDir;
-            if (video.Link.Contains("playlist")) outDir += $"\\{video.Title}\\";
+            if (!String.IsNullOrEmpty(video.Playlist)) outDir += $"\\{video.Playlist}\\";
 
             using Process downloader = new();
             downloader.StartInfo.FileName = Config.Settings.YoutubeDL;
@@ -221,11 +244,13 @@ namespace YouTubeStuff {
             IProgress<int> progress = new Progress<int>(p => {
                 ProgressBar.Value = p;
                 ProgressBar.Maximum = Videos.Count;
+                TaskbarItemInfo.ProgressValue = (double)p / Videos.Count;
             });
 
             int currentProgress = 1;
             progress.Report(currentProgress);
             ProgressBar.Visibility = Visibility.Visible;
+            TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Normal;
             await Task.Run(async () => {
                 Parallel.ForEach(Videos, video => {
                     Download(video);
@@ -234,8 +259,10 @@ namespace YouTubeStuff {
                 await Task.Delay(200);
             });
             ProgressBar.Visibility = Visibility.Collapsed;
+            TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
 
             Mouse.OverrideCursor = null;
+            SystemSounds.Exclamation.Play();
 
             Process.Start(new ProcessStartInfo(Config.Settings.OutDir) { UseShellExecute = true });
         }
@@ -245,21 +272,26 @@ namespace YouTubeStuff {
 
             Mouse.OverrideCursor = Cursors.Wait;
 
+
             IProgress<int> progress = new Progress<int>(p => {
                 ProgressBar.Value = p;
                 ProgressBar.Maximum = 12;
+                TaskbarItemInfo.ProgressValue = (double)p / 12;
             });
 
             progress.Report(1); 
             ProgressBar.Visibility = Visibility.Visible;
+            TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Normal;
             await Task.Run(async () => {
                 Download(video);
                 progress.Report(12);
                 await Task.Delay(200);
             });
             ProgressBar.Visibility = Visibility.Collapsed;
+            TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
 
             Mouse.OverrideCursor = null;
+            SystemSounds.Exclamation.Play();
 
             Process.Start(new ProcessStartInfo(Config.Settings.OutDir) { UseShellExecute = true });
         }

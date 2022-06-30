@@ -9,6 +9,9 @@
         Width="650" SizeToContent="Height" UseLayoutRounding="True"
         WindowStartupLocation="CenterScreen"
         Style="{DynamicResource CustomWindowStyle}" ResizeMode="CanMinimize" >
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo />
+    </Window.TaskbarItemInfo>
     <Grid>
         <Grid Background="#FF141414" Margin="5,75,5,5">
             <Grid.RowDefinitions>
