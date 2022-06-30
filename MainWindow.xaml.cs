@@ -128,6 +128,27 @@ namespace YouTubeStuff {
             }
         }
 
+        private void Download(Video video) {
+            using Process downloader = new();
+            if (video.Site == "YouTube") {
+                downloader.StartInfo.FileName = App.YTDL;
+                //p.Arguments = $"-f bestaudio -x --audio-format flac {video.Link} -o \"{App.OutDir}\\%%(title)s.%%(ext)s\"";
+                //p.Arguments = $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{App.OutDir}\\%%(title)s.%%(ext)s\"";
+                downloader.StartInfo.Arguments = $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4  {video.Link} -o \"{App.OutDir}\\{video.Title}\"";
+
+            }
+            else if (video.Site == "Twitter") {
+                downloader.StartInfo.FileName = App.GDL;
+                downloader.StartInfo.Arguments = $"-D \"{App.OutDir}\" \"{video.Link}\"";
+            }
+            else if (video.Site == "Reddit") {
+                downloader.StartInfo.FileName = App.YTDL;
+                downloader.StartInfo.Arguments = $"{video.Link} -o \"{App.OutDir}\\{video.Title}.%(ext)s\"";
+            }
+            downloader.Start();
+            downloader.WaitForExit();
+        }
+
         private async void ButtonSave_Click(object sender, RoutedEventArgs e) {
             Video video = VideoListBox.SelectedItem as Video;
             SaveFileDialog saveFileDialog = new() { InitialDirectory = App.OutDir, Filter = "Image|*.*" };
@@ -146,6 +167,19 @@ namespace YouTubeStuff {
             IDataObject data = new DataObject();
             data.SetData(DataFormats.Bitmap, new BitmapImage(new Uri(video.Thumbnail)), true);
             Clipboard.SetDataObject(data, true);
+        }
+
+        private void DownloadAllButton_Click(object sender, RoutedEventArgs e) {
+            Parallel.ForEach(Videos, video => {
+                Download(video);
+            });
+            Process.Start(new ProcessStartInfo(App.OutDir) { UseShellExecute = true });
+        }
+
+        private void ListBoxDownloadVideo_Click(object sender, RoutedEventArgs e) {
+            Video video = ((Button)sender).DataContext as Video;
+            Download(video);
+            Process.Start(new ProcessStartInfo(App.OutDir) { UseShellExecute = true });
         }
     }
 }

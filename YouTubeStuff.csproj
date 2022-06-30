@@ -10,10 +10,17 @@
   <ItemGroup>
     <None Remove=".gitattributes" />
     <None Remove=".gitignore" />
+    <None Remove="Resources\download.png" />
+    <None Remove="Resources\folder.png" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\download.png" />
+    <Resource Include="Resources\folder.png" />
   </ItemGroup>
 
 </Project>

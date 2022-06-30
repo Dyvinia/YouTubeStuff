@@ -36,18 +36,43 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="4"/>
                                     </Grid.ColumnDefinitions>
 
                                     <Grid Grid.Column="0" Height="22" Width="40">
                                         <Image Source="{Binding Thumbnail}" Margin="1" RenderOptions.BitmapScalingMode="HighQuality"/>
                                     </Grid>
                                     <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="4 0 0 0" VerticalAlignment="Center" TextWrapping="NoWrap" />
+
+                                    <Button x:Name="ListBoxDownloadVideo" Grid.Column="2" Click="ListBoxDownloadVideo_Click" ToolTip="Download Video" Background="Transparent">
+                                        <Image Source="Resources/download.png"/>
+                                        <Button.Style>
+                                            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter Property="Opacity" Value="0.4"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="{x:Type Button}">
+                                                <Border Background="{TemplateBinding Background}">
+                                                    <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <Button Content="Download All" Height="22" Margin="0 5 0 0"/>
+                    <Button x:Name="DownloadAllButton" Content="Download All" Height="22" Margin="0 5 0 0" Click="DownloadAllButton_Click"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Vertical">
