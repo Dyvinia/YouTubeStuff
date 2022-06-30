@@ -1,10 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
-    <Nullable>disable</Nullable>
-    <UseWPF>true</UseWPF>
+	  <OutputType>WinExe</OutputType>
+	  <TargetFramework>net6.0-windows</TargetFramework>
+	  <Nullable>disable</Nullable>
+	  <UseWPF>true</UseWPF>
+
+	  <AssemblyName>YouTubeStuff</AssemblyName>
+	  <Version>1.0.0</Version>
+	  <Copyright>Copyright © 2022 Dyvinia</Copyright>
+	  <Company>Dyvinia</Company>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +17,7 @@
     <None Remove=".gitignore" />
     <None Remove="Resources\download.png" />
     <None Remove="Resources\folder.png" />
+    <None Remove="Resources\Icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +28,7 @@
   <ItemGroup>
     <Resource Include="Resources\download.png" />
     <Resource Include="Resources\folder.png" />
+    <Resource Include="Resources\Icon.ico" />
   </ItemGroup>
 
 </Project>

@@ -239,6 +239,11 @@ namespace YouTubeStuff {
         }
 
         private async void DownloadAllButton_Click(object sender, RoutedEventArgs e) {
+            if (Videos.Count == 1) {
+                ListBoxDownloadVideo_Click(Videos[0], e);
+                return;
+            }
+
             Mouse.OverrideCursor = Cursors.Wait;
 
             IProgress<int> progress = new Progress<int>(p => {
@@ -268,7 +273,11 @@ namespace YouTubeStuff {
         }
 
         private async void ListBoxDownloadVideo_Click(object sender, RoutedEventArgs e) {
-            Video video = ((Button)sender).DataContext as Video;
+            Video video;
+            if (sender is Video) 
+                video = sender as Video;
+            else 
+                video = ((Button)sender).DataContext as Video;
 
             Mouse.OverrideCursor = Cursors.Wait;
 
