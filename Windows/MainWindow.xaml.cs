@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Media;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows;
@@ -125,7 +126,11 @@ namespace YouTubeStuff {
                     string videoTitle = json.title;
                     string videoID = ((string)json.thumbnail_url).Split("/")[^2];
 
-                    Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg", Site = "YouTube", Playlist = link.Playlist });
+                    string thumbnailURL = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg";
+                    if (!IsValidImage(thumbnailURL))
+                        thumbnailURL = $"https://img.youtube.com/vi/{videoID}/mqdefault.jpg";
+
+                    Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
                 }
                 // Twitter
                 if (link.URL.Contains("twitter.com")) {
@@ -326,6 +331,12 @@ namespace YouTubeStuff {
                 FormatVideoComboBox.Visibility = Visibility.Collapsed;
                 FormatAudioComboBox.Visibility = Visibility.Visible;
             }
+        }
+        public bool IsValidImage(string url) {
+            HttpClient client = new();
+            using var request = new HttpRequestMessage(HttpMethod.Head, new Uri(url));
+            using HttpResponseMessage response = client.Send(request);
+            return response.StatusCode == HttpStatusCode.OK;
         }
 
         protected override void OnKeyDown(KeyEventArgs e) {
