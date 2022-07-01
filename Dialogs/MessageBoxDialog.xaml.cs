@@ -23,6 +23,7 @@ namespace YouTubeStuff.Dialogs {
 
             Title = title;
             MessageText.Text = message;
+            Owner = Application.Current.MainWindow;
 
             OKButton.Click += OnClose;
             YesButton.Click += OnClose;
