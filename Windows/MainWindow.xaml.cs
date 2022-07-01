@@ -16,6 +16,7 @@ using System.Collections.ObjectModel;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using HtmlAgilityPack;
+using System.Web;
 
 namespace YouTubeStuff {
     /// <summary>
@@ -122,15 +123,41 @@ namespace YouTubeStuff {
                 // YouTube
                 if (link.URL.Contains("youtu")) {
                     using HttpClient client = new();
-                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://youtube.com/oembed?url={link.URL}"));
-                    string videoTitle = json.title;
-                    string videoID = ((string)json.thumbnail_url).Split("/")[^2];
 
-                    string thumbnailURL = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg";
-                    if (!IsValidImage(thumbnailURL))
-                        thumbnailURL = $"https://img.youtube.com/vi/{videoID}/mqdefault.jpg";
+                    // Check if restricted/unembeddable
+                    try {
+                        dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://youtube.com/oembed?url={link.URL}"));
+                        string videoTitle = json.title;
+                        string videoID = ((string)json.thumbnail_url).Split("/")[^2];
 
-                    Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
+                        string thumbnailURL = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg";
+                        if (!IsValidImage(thumbnailURL))
+                            thumbnailURL = $"https://img.youtube.com/vi/{videoID}/mqdefault.jpg";
+
+                        Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
+                    }
+                    catch {
+                        if (link.URL.Contains("www.youtube.com/watch?v=")) {
+                            string videoID = HttpUtility.ParseQueryString(new Uri(link.URL).Query).Get("v");
+                            string videoTitle = $"Restricted YouTube Video (ID: {videoID})";
+                            string thumbnailURL = $"https://img.youtube.com/vi/{videoID}/mqdefault.jpg";
+
+                            if (!IsValidImage(thumbnailURL))
+                                videoTitle = $"Unknown YouTube Video (ID: {videoID})";
+
+                            Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
+                        }
+                        else if (link.URL.Contains("youtu.be/")) {
+                            string videoID = link.URL.Split("/")[3];
+                            string videoTitle = $"Restricted YouTube Video (ID: {videoID})";
+                            string thumbnailURL = $"https://img.youtube.com/vi/{videoID}/mqdefault.jpg";
+
+                            if (!IsValidImage(thumbnailURL))
+                                videoTitle = $"Unknown YouTube Video (ID: {videoID})";
+
+                            Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
+                        }
+                    }
                 }
                 // Twitter
                 if (link.URL.Contains("twitter.com")) {
@@ -198,6 +225,9 @@ namespace YouTubeStuff {
             downloader.StartInfo.Arguments += "--newline ";
 
             if (video.Site == "YouTube") {
+                if (File.Exists(Path.Combine(App.BaseDir, "cookies.txt"))) 
+                    downloader.StartInfo.Arguments += $" --cookies {Path.Combine(App.BaseDir, "cookies.txt")} ";
+
                 // Video
                 if (Config.Settings.ExportType == 0) {
                     // Original
