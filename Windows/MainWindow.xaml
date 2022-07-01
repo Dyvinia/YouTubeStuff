@@ -124,7 +124,7 @@
                                     <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="4 0 0 0" VerticalAlignment="Center" TextWrapping="NoWrap" />
 
                                     <Button x:Name="ListBoxDownloadVideo" Grid.Column="2" Click="ListBoxDownloadVideo_Click" ToolTip="Download Video" Background="Transparent">
-                                        <Image Source="Resources/download.png"/>
+                                        <Image Source="/Resources/download.png"/>
                                         <Button.Style>
                                             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                                                 <Style.Triggers>
