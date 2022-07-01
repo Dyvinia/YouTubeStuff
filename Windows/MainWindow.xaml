@@ -237,6 +237,6 @@
             </Grid>
         </Grid>
 
-        <ProgressBar x:Name="ProgressBar" Height="5" VerticalAlignment="Bottom" Background="Transparent" Foreground="White" BorderThickness="0"/>
+        <ProgressBar x:Name="ProgressBar" Height="5" Visibility="Hidden" VerticalAlignment="Bottom" Background="Transparent" Foreground="White" BorderThickness="0"/>
     </Grid>
 </Window>
