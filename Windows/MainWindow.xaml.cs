@@ -332,6 +332,8 @@ namespace YouTubeStuff {
             base.OnKeyDown(e);
             if (e.Key == Key.Return)
                 FocusManager.SetFocusedElement(this, this);
+            if (e.Key == Key.F12)
+                Process.Start(new ProcessStartInfo(Config.Settings.OutDir) { UseShellExecute = true });
         }
     }
 }
