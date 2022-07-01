@@ -72,7 +72,7 @@ namespace YouTubeStuff {
                 if (link.Contains("youtu") && link.Contains("playlist")) {
                     Mouse.OverrideCursor = Cursors.Wait;
                     ProcessStartInfo p = new() {
-                        FileName = Config.Settings.YoutubeDL,
+                        FileName = Config.Settings.UtilsDir + "yt-dlp.exe",
                         CreateNoWindow = true,
                         Arguments = $"-j --flat-playlist {link}",
                         RedirectStandardOutput = true,
@@ -185,8 +185,10 @@ namespace YouTubeStuff {
             if (!String.IsNullOrEmpty(video.Playlist)) outDir += $"\\{video.Playlist}\\";
 
             using Process downloader = new();
-            downloader.StartInfo.FileName = Config.Settings.YoutubeDL;
+            downloader.StartInfo.FileName = Config.Settings.UtilsDir + "yt-dlp.exe";
             downloader.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
+
+            downloader.EnableRaisingEvents = true;
             downloader.StartInfo.Arguments += "--newline ";
 
             if (video.Site == "YouTube") {

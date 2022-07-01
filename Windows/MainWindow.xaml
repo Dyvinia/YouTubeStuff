@@ -8,7 +8,7 @@
         Title="YoutubeStuff"
         Width="700" SizeToContent="Height" UseLayoutRounding="True"
         WindowStartupLocation="CenterScreen"
-        Icon="Resources/Icon.ico"
+        Icon="/Resources/Icon.ico"
         Style="{DynamicResource CustomWindowStyle}" ResizeMode="CanMinimize" >
     <Window.TaskbarItemInfo>
         <TaskbarItemInfo />
@@ -81,7 +81,7 @@
                         <TextBlock TextWrapping="Wrap" Text="Videos" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
 
                         <Button x:Name="DownloadAllButton" Click="DownloadAllButton_Click" IsEnabled="False" Background="Transparent" Margin="0 0 0 0" ToolTip="Download all Videos in list" Height="16" HorizontalAlignment="Right">
-                            <Image Source="Resources/download.png"/>
+                            <Image Source="/Resources/download.png"/>
                             <Button.Style>
                                 <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                                     <Style.Triggers>
@@ -164,7 +164,7 @@
                             <TextBlock TextWrapping="Wrap" Text="Thumbnail" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
                             <StackPanel Orientation="Horizontal" Height="16" HorizontalAlignment="Right">
                                 <Button x:Name="ButtonClipboard" Click="ButtonClipboard_Click" IsEnabled="False" Background="Transparent" Margin="0 0 0 0" ToolTip="Copy Image to Clipboard" >
-                                    <Image Source="Resources/copy.png"/>
+                                    <Image Source="/Resources/copy.png"/>
                                     <Button.Style>
                                         <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                                             <Style.Triggers>
@@ -190,7 +190,7 @@
                                 </Button>
 
                                 <Button x:Name="ButtonSave" Click="ButtonSave_Click" IsEnabled="False" Background="Transparent" Margin="0 0 0 0" ToolTip="Save Image">
-                                    <Image Source="Resources/download.png"/>
+                                    <Image Source="/Resources/download.png"/>
                                     <Button.Style>
                                         <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                                             <Style.Triggers>
