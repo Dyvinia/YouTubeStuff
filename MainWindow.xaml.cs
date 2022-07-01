@@ -46,6 +46,8 @@ namespace YouTubeStuff {
         public MainWindow() {
             InitializeComponent();
 
+            Title += $" {App.Version}";
+
             LinkBox.LostFocus += (s, e) => LinkChanged();
 
             VideoListBox.ItemsSource = Videos;
