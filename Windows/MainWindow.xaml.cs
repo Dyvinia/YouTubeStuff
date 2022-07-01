@@ -61,6 +61,14 @@ namespace YouTubeStuff {
             FormatVideoComboBox.DataContext = Config.Settings;
 
             MouseDown += (s, e) => FocusManager.SetFocusedElement(this, this);
+
+            if (Config.Settings.PasteOnStartup) {
+                string paste = Clipboard.GetText();
+                if (paste.Contains("http")) {
+                    LinkBox.Text = paste;
+                    LinkChanged();
+                }
+            }
         }
 
         private async void LinkChanged() {

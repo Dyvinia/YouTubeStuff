@@ -17,9 +17,11 @@ namespace YouTubeStuff {
         public int ExportType { get; set; } = 0;
         public int ExportFormatAudio { get; set; } = 0;
         public int ExportFormatVideo { get; set; } = 0;
-        public bool ShowWindows { get; set; } = false;
-        public string AdditionalArgs { get; set; } = "";
 
+        public bool ShowWindows { get; set; } = false;
+        public bool PasteOnStartup { get; set; } = true;
+
+        public string AdditionalArgs { get; set; } = "";
         public string OutDir { get; set; } = App.BaseDir + "Output";
         public string UtilsDir { get; set; } = App.BaseDir + "Utils\\";
     }
