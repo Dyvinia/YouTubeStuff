@@ -18,7 +18,7 @@ namespace YouTubeStuff {
         public int ExportFormatAudio { get; set; } = 0;
         public int ExportFormatVideo { get; set; } = 0;
         public bool ShowWindows { get; set; } = false;
-        public string AdditionalArgs { get; set; }
+        public string AdditionalArgs { get; set; } = "";
 
         public string OutDir { get; set; } = App.BaseDir + "Output";
         public string YoutubeDL { get; set; } = App.BaseDir + "yt-dlp.exe";
