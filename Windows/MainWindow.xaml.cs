@@ -225,8 +225,9 @@ namespace YouTubeStuff {
             downloader.StartInfo.Arguments += "--newline ";
 
             if (video.Site == "YouTube") {
-                if (File.Exists(Path.Combine(App.BaseDir, "cookies.txt"))) 
-                    downloader.StartInfo.Arguments += $" --cookies {Path.Combine(App.BaseDir, "cookies.txt")} ";
+                // Check for cookies.txt
+                if (File.Exists(Path.Combine(Config.Settings.UtilsDir, "cookies.txt"))) 
+                    downloader.StartInfo.Arguments += $" --cookies \"{Path.Combine(Config.Settings.UtilsDir, "cookies.txt")}\" ";
 
                 // Video
                 if (Config.Settings.ExportType == 0) {
