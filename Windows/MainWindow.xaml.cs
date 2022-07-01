@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,7 +17,6 @@ using System.Collections.ObjectModel;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using HtmlAgilityPack;
-using System.Web;
 
 namespace YouTubeStuff {
     /// <summary>
@@ -104,9 +104,9 @@ namespace YouTubeStuff {
                 ProgressBar.Maximum = links.Count;
             });
 
-            ProgressBar.Visibility = Visibility.Visible;
+            //ProgressBar.Visibility = Visibility.Visible;
             await GenerateList(links, progress);
-            ProgressBar.Visibility = Visibility.Collapsed;
+            //ProgressBar.Visibility = Visibility.Collapsed;
 
             if (Videos.Count > 0) VideoListBox.SelectedIndex = 0;
 
@@ -122,10 +122,9 @@ namespace YouTubeStuff {
             foreach (Link link in links) {
                 // YouTube
                 if (link.URL.Contains("youtu")) {
-                    using HttpClient client = new();
-
                     // Check if restricted/unembeddable
                     try {
+                        using HttpClient client = new();
                         dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://youtube.com/oembed?url={link.URL}"));
                         string videoTitle = json.title;
                         string videoID = ((string)json.thumbnail_url).Split("/")[^2];
@@ -222,7 +221,7 @@ namespace YouTubeStuff {
             downloader.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
 
             downloader.EnableRaisingEvents = true;
-            downloader.StartInfo.Arguments += "--newline ";
+            downloader.StartInfo.Arguments += " --newline ";
 
             if (video.Site == "YouTube") {
                 // Check for cookies.txt
