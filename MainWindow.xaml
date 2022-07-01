@@ -77,8 +77,37 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Vertical">
-                    <TextBlock TextWrapping="Wrap" Text="Videos" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
-                    <ListBox x:Name="VideoListBox" Height="185" HorizontalContentAlignment="Stretch" Background="#FF141414" BorderBrush="#FF323232" Foreground="#FFF1F1F1" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
+                    <Grid>
+                        <TextBlock TextWrapping="Wrap" Text="Videos" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+
+                        <Button x:Name="DownloadAllButton" Click="DownloadAllButton_Click" IsEnabled="False" Background="Transparent" Margin="0 0 0 0" ToolTip="Download all Videos in list" Height="16" HorizontalAlignment="Right">
+                            <Image Source="Resources/download.png"/>
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Opacity" Value="0.6"/>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter Property="Opacity" Value="0.4"/>
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Opacity" Value="0.4"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Button.Template>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border Background="{TemplateBinding Background}">
+                                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
+                    
+                    <ListBox x:Name="VideoListBox" Height="190" HorizontalContentAlignment="Stretch" Background="#FF141414" BorderBrush="#FF323232" Foreground="#FFF1F1F1" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid ToolTip="{Binding Site}">
@@ -121,7 +150,7 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <Button x:Name="DownloadAllButton" Content="Download All" Height="22" Margin="0 5 0 0" Click="DownloadAllButton_Click"/>
+                    <!--<Button x:Name="DownloadAllButton" Content="Download All" Height="22" Margin="0 5 0 0" Click="DownloadAllButton_Click"/>-->
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Vertical">
@@ -130,20 +159,77 @@
                         <TextBox x:Name="TitleBox" Height="20" Width="240" IsReadOnly="True" IsReadOnlyCaretVisible="False"/>
                     </StackPanel>
 
-                    <StackPanel Orientation="Vertical" Width="240" HorizontalAlignment="Right" Margin="0 10 0 0">
-                        <TextBlock TextWrapping="Wrap" Text="Thumbnail" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                    <StackPanel Orientation="Vertical" Width="240" HorizontalAlignment="Right" Margin="0 15 0 0">
+                        <Grid>
+                            <TextBlock TextWrapping="Wrap" Text="Thumbnail" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                            <StackPanel Orientation="Horizontal" Height="16" HorizontalAlignment="Right">
+                                <Button x:Name="ButtonClipboard" Click="ButtonClipboard_Click" IsEnabled="False" Background="Transparent" Margin="0 0 0 0" ToolTip="Copy Image to Clipboard" >
+                                    <Image Source="Resources/copy.png"/>
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Opacity" Value="0.6"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Opacity" Value="0.4"/>
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.4"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <Button x:Name="ButtonSave" Click="ButtonSave_Click" IsEnabled="False" Background="Transparent" Margin="0 0 0 0" ToolTip="Save Image">
+                                    <Image Source="Resources/download.png"/>
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Opacity" Value="0.6"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Opacity" Value="0.4"/>
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.4"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </StackPanel>
+                            
+                        </Grid>
+                        
                         <Border Height="135" Width="240" BorderThickness="1" BorderBrush="#FF323232">
                             <Image x:Name="ImageThumbnail" RenderOptions.BitmapScalingMode="HighQuality" />
                         </Border>
-                        <Grid Margin="0 5 0 0" Height="22" >
+                        <!--<Grid Margin="0 5 0 0" Height="22" >
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="5"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" x:Name="ButtonClipboard" Content="Copy To Clipboard" Click="ButtonClipboard_Click" IsEnabled="False"/>
-                            <Button Grid.Column="2" x:Name="ButtonSave" Content="Save" Click="ButtonSave_Click" IsEnabled="False"/>
-                        </Grid>
+                            --><!--<Button Grid.Column="0" x:Name="ButtonClipboard" Content="Copy To Clipboard" Click="ButtonClipboard_Click" IsEnabled="False"/>-->
+                            <!--<Button Grid.Column="2" x:Name="ButtonSave" Content="Save" Click="ButtonSave_Click" IsEnabled="False"/>--><!--
+                        </Grid>-->
 
                     </StackPanel>
                 </StackPanel>

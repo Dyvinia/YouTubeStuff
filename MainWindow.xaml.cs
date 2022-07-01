@@ -171,6 +171,11 @@ namespace YouTubeStuff {
                 ButtonClipboard.IsEnabled = true;
                 ButtonSave.IsEnabled = true;
             }
+
+            if (Videos.Count > 0)
+                DownloadAllButton.IsEnabled = true;
+            else
+                DownloadAllButton.IsEnabled = false;
         }
 
         private void Download(Video video) {

@@ -37,6 +37,8 @@ namespace YouTubeStuff {
         public App() {
             Config.Load();
 
+            Environment.CurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
             Directory.CreateDirectory(Config.Settings.OutDir);
 
             DispatcherUnhandledException += Application_DispatcherUnhandledException;
