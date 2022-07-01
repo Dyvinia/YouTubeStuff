@@ -23,7 +23,13 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="32"/>
             </Grid.RowDefinitions>
-            <TextBox x:Name="ExceptionText" Grid.Row="0" Padding="5" IsReadOnly="True" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextWrapping="Wrap"/>
+            <TextBox x:Name="ExceptionText" Grid.Row="0" Padding="5" IsReadOnly="True" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextWrapping="Wrap">
+                <TextBox.Resources>
+                    <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource {x:Type ScrollBar}}">
+                        <Setter Property="Margin" Value="1 1 1 2"/>
+                    </Style>
+                </TextBox.Resources>
+            </TextBox>
             <Separator Height="1" Margin="0" VerticalAlignment="Bottom"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="1">
                 <Button x:Name="CopyButton" Content="Copy to Clipboard" Width="135" HorizontalAlignment="Right" Margin="0,5,5,5" />
