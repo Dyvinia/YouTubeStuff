@@ -18,6 +18,7 @@ namespace YouTubeStuff {
         public int ExportType { get; set; } = 0;
         public int ExportFormatAudio { get; set; } = 0;
         public int ExportFormatVideo { get; set; } = 0;
+        public int MaxConcurrentDownloads { get; set; } = 6;
 
         public bool UpdateChecker { get; set; } = true;
         public bool ShowWindows { get; set; } = false;

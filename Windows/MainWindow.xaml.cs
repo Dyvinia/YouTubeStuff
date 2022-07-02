@@ -304,7 +304,7 @@ namespace YouTubeStuff {
             ProgressBar.Visibility = Visibility.Visible;
             TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Normal;
             await Task.Run(async () => {
-                Parallel.ForEach(Videos, video => {
+                Parallel.ForEach(Videos, new ParallelOptions { MaxDegreeOfParallelism = Config.Settings.MaxConcurrentDownloads }, video => {
                     Download(video);
                     progress.Report(currentProgress++);
                 });
