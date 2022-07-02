@@ -364,8 +364,7 @@ namespace YouTubeStuff {
         }
         public bool IsValidImage(string url) {
             HttpClient client = new();
-            using var request = new HttpRequestMessage(HttpMethod.Head, new Uri(url));
-            using HttpResponseMessage response = client.Send(request);
+            using HttpResponseMessage response = client.Send(new(HttpMethod.Head, new Uri(url)));
             return response.StatusCode == HttpStatusCode.OK;
         }
 

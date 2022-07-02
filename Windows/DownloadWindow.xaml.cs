@@ -45,7 +45,7 @@ namespace YouTubeStuff {
 
             using ZipArchive archive = ZipFile.OpenRead(destination);
             foreach (ZipArchiveEntry entry in archive.Entries.Where(e => e.FullName.Contains("ffmpeg.exe"))) {
-                entry.ExtractToFile(Path.Combine(App.BaseDir, "Utils", entry.Name), true);
+                entry.ExtractToFile(Path.Combine(Config.Settings.UtilsDir, entry.Name), true);
             }
         }
 
