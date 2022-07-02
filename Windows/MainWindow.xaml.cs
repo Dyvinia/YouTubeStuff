@@ -55,6 +55,8 @@ namespace YouTubeStuff {
             FormatAudioComboBox.DataContext = Config.Settings;
             FormatVideoComboBox.DataContext = Config.Settings;
 
+            ImageThumbnail.MouseDown += (s, e) => Process.Start(new ProcessStartInfo((VideoListBox.SelectedItem as Video).Thumbnail) { UseShellExecute = true });
+
             MouseDown += (s, e) => FocusManager.SetFocusedElement(this, this);
 
             if (Config.Settings.PasteOnStartup) {

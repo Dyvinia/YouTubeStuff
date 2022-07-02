@@ -219,7 +219,7 @@
                         </Grid>
                         
                         <Border Height="135" Width="240" BorderThickness="1" BorderBrush="#FF323232">
-                            <Image x:Name="ImageThumbnail" RenderOptions.BitmapScalingMode="HighQuality" />
+                            <Image x:Name="ImageThumbnail" RenderOptions.BitmapScalingMode="HighQuality" Cursor="Hand" />
                         </Border>
                         <!--<Grid Margin="0 5 0 0" Height="22" >
                             <Grid.ColumnDefinitions>
