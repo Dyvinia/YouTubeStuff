@@ -183,6 +183,13 @@ namespace YouTubeStuff {
 
                     Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Reddit" });
                 }
+                // Instagram
+                if (link.URL.Contains("instagram.com")) {
+                    string videoTitle = $"Instagram Video ({new Uri(link.URL).AbsolutePath[1..^1]})";
+                    string videoThumbnail = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/600px-Instagram_logo_2022.svg.png";
+
+                    Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Instagram" });
+                }
 
                 progress.Report(currentProgress++);
             }
@@ -257,6 +264,10 @@ namespace YouTubeStuff {
             }
 
             else if (video.Site == "Reddit") {
+                downloader.StartInfo.Arguments = $"{video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+            }
+
+            else if (video.Site == "Instagram") {
                 downloader.StartInfo.Arguments = $"{video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
             }
 
