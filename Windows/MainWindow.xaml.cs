@@ -106,9 +106,9 @@ namespace YouTubeStuff {
                 ProgressBar.Maximum = links.Count;
             });
 
-            //ProgressBar.Visibility = Visibility.Visible;
+            if (links.Count > 5) ProgressBar.Visibility = Visibility.Visible;
             await GenerateList(links, progress);
-            //ProgressBar.Visibility = Visibility.Collapsed;
+            ProgressBar.Visibility = Visibility.Collapsed;
 
             if (Videos.Count > 0) VideoListBox.SelectedIndex = 0;
 
