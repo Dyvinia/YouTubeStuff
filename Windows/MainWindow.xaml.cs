@@ -240,6 +240,7 @@ namespace YouTubeStuff {
             // Set Start time and End time
             if (video.StartTime != null || video.EndTime != null) {
 
+                // Defined Start to Defined End
                 if (video.StartTime != null && video.EndTime != null) {
                     output = $"{outDir}\\%(title)s_temp.%(ext)s";
                     if (Config.Settings.OnlyDownloadSegment) {
@@ -259,8 +260,9 @@ namespace YouTubeStuff {
                     else
                         ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -ss {video.StartTime} -to {video.EndTime} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
                     ytdl.StartInfo.Arguments += $" --exec \"del %(filepath)q\" ";
-                }  
+                }
 
+                // Beginning to Defined End
                 else if (video.StartTime == null && video.EndTime != null) {
                     if (Config.Settings.OnlyDownloadSegment)
                         ytdl.StartInfo.Arguments += $" --external-downloader ffmpeg --external-downloader-args \"ffmpeg_i:-ss 00:00 -to {video.EndTime}\" ";
@@ -271,6 +273,7 @@ namespace YouTubeStuff {
                     }
                 }
 
+                // Defined Start to Actual End
                 else if (video.StartTime != null && video.EndTime == null) {
                     string[] startTimeParts = video.StartTime.Split(':');
                     TimeSpan startTime = new(Convert.ToInt32((startTimeParts.Length > 2) ? startTimeParts[^3] : 0), Convert.ToInt32(startTimeParts[^2]), Convert.ToInt32(startTimeParts[^1]));
@@ -285,7 +288,7 @@ namespace YouTubeStuff {
                     ytdl.StartInfo.Arguments += $" --exec \"del %(filepath)q\" ";
                 }
             }
-            
+
 
             if (video.Site == "YouTube") {
                 // Check for cookies.txt
