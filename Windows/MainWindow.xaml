@@ -114,16 +114,56 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="4"/>
                                         <ColumnDefinition Width="16"/>
                                         <ColumnDefinition Width="2"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Grid Grid.Column="0" Height="22" Width="40">
+                                    <Grid Grid.Column="0" Height="24" Width="40">
                                         <Image Source="{Binding Thumbnail}" Margin="1" RenderOptions.BitmapScalingMode="HighQuality"/>
                                     </Grid>
                                     <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="4 0 0 0" VerticalAlignment="Center" TextWrapping="NoWrap" />
 
-                                    <Button x:Name="ListBoxDownloadVideo" Grid.Column="2" Click="ListBoxDownloadVideo_Click" ToolTip="Download Video" Background="Transparent">
+                                    <Grid Grid.Column="2" Height="20">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Grid Width="36">
+                                                <TextBox x:Name="StartTimeBox" Text="{Binding StartTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" PreviewTextInput="LiveValidationTextBox" LostFocus="FinalValidationTextBox" />
+                                                <TextBlock IsHitTestVisible="False" Text="00:00" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.25">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="{x:Type TextBlock}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Text, ElementName=StartTimeBox}" Value="">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                            
+                                            <TextBlock Text=" - " VerticalAlignment="Center"/>
+                                            
+                                            <Grid Width="36">
+                                                <TextBox x:Name="EndTimeBox" Text="{Binding EndTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" PreviewTextInput="LiveValidationTextBox" LostFocus="FinalValidationTextBox" />
+                                                <TextBlock IsHitTestVisible="False" Text="xx:xx" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.25">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="{x:Type TextBlock}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Text, ElementName=EndTimeBox}" Value="">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Button x:Name="ListBoxDownloadVideo" Grid.Column="4" Click="ListBoxDownloadVideo_Click" ToolTip="Download Video" Background="Transparent">
                                         <Image Source="/Resources/download.png"/>
                                         <Button.Style>
                                             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">

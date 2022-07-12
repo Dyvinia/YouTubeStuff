@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Windows;
 using System.Windows.Controls;
@@ -30,6 +31,8 @@ namespace YouTubeStuff {
             public string Thumbnail { get; set; }
             public string Site { get; set; }
             public string Playlist { get; set; }
+            public string StartTime { get; set; }
+            public string EndTime { get; set; }
         }
         public ObservableCollection<Video> Videos = new();
 
@@ -62,8 +65,10 @@ namespace YouTubeStuff {
             if (Config.Settings.PasteOnStartup) {
                 string paste = Clipboard.GetText();
                 if (paste.Contains("http")) {
-                    LinkBox.Text = paste;
-                    LinkChanged();
+                    Dispatcher.BeginInvoke(() => {
+                        LinkBox.Text = paste;
+                        LinkChanged();
+                    });
                 }
             }
         }
@@ -229,6 +234,15 @@ namespace YouTubeStuff {
             downloader.StartInfo.FileName = Config.Settings.UtilsDir + "yt-dlp.exe";
             downloader.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
 
+            if (video.StartTime != null && video.EndTime != null)
+                downloader.StartInfo.Arguments += $" --postprocessor-args \"-ss {video.StartTime} -to {video.EndTime}\" ";
+
+            else if (video.StartTime == null && video.EndTime != null)
+                downloader.StartInfo.Arguments += $" --postprocessor-args \"-ss 00:00 -to {video.EndTime}\" ";
+
+            else if (video.StartTime != null && video.EndTime == null)
+                downloader.StartInfo.Arguments += $" --postprocessor-args \"-ss {video.StartTime}\" ";
+
             downloader.EnableRaisingEvents = true;
             downloader.StartInfo.Arguments += " --newline ";
 
@@ -260,15 +274,15 @@ namespace YouTubeStuff {
             }
 
             else if (video.Site == "Twitter") {
-                downloader.StartInfo.Arguments = $"{video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+                downloader.StartInfo.Arguments = $"{video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
             }
 
             else if (video.Site == "Reddit") {
-                downloader.StartInfo.Arguments = $"{video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+                downloader.StartInfo.Arguments = $"{video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
             }
 
             else if (video.Site == "Instagram") {
-                downloader.StartInfo.Arguments = $"{video.Link} -o \"{Config.Settings.OutDir}\\%(title)s.%(ext)s\"";
+                downloader.StartInfo.Arguments = $"{video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
             }
 
             if (!Config.Settings.ShowWindows) downloader.StartInfo.CreateNoWindow = true;
@@ -379,6 +393,20 @@ namespace YouTubeStuff {
             HttpClient client = new();
             using HttpResponseMessage response = client.Send(new(HttpMethod.Head, new Uri(url)));
             return response.StatusCode == HttpStatusCode.OK;
+        }
+
+        private void LiveValidationTextBox(object sender, TextCompositionEventArgs e) {
+            Regex regex = new("[^0-9:]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
+        private void FinalValidationTextBox (object sender, RoutedEventArgs e) {
+            TextBox text = sender as TextBox;
+            if (!TimeSpan.TryParseExact(text.Text, @"m\:ss", System.Globalization.CultureInfo.CurrentCulture, out _) 
+                && !TimeSpan.TryParseExact(text.Text, @"mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _) 
+                && !TimeSpan.TryParseExact(text.Text, @"h\:mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _) 
+                && !TimeSpan.TryParseExact(text.Text, @"hh\:mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _))
+                text.Text = null;
         }
 
         protected override void OnKeyDown(KeyEventArgs e) {
