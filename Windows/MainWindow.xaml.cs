@@ -234,6 +234,7 @@ namespace YouTubeStuff {
             downloader.StartInfo.FileName = Config.Settings.UtilsDir + "yt-dlp.exe";
             downloader.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
 
+            // Set Start time and End time
             if (video.StartTime != null && video.EndTime != null)
                 downloader.StartInfo.Arguments += $" --postprocessor-args \"-ss {video.StartTime} -to {video.EndTime}\" ";
 
