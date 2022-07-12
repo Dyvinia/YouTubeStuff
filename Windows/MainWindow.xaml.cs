@@ -445,8 +445,13 @@ namespace YouTubeStuff {
 
         private void FinalValidationTextBox (object sender, RoutedEventArgs e) {
             TextBox text = sender as TextBox;
-            if (!TimeSpan.TryParseExact(text.Text, @"m\:ss", System.Globalization.CultureInfo.CurrentCulture, out _) 
-                && !TimeSpan.TryParseExact(text.Text, @"mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _)
+            if (text.Text.Length == 1) text.Text = $"0{text.Text}";
+            if (TimeSpan.TryParseExact(text.Text, @"ss", System.Globalization.CultureInfo.CurrentCulture, out _))
+                text.Text = $"00:{text.Text}";
+            else if (TimeSpan.TryParseExact(text.Text, @"m\:ss", System.Globalization.CultureInfo.CurrentCulture, out _))
+                text.Text = $"0{text.Text}";
+
+            if (!TimeSpan.TryParseExact(text.Text, @"mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _)
                 && !TimeSpan.TryParseExact(text.Text, @"h\:mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _)
                 && !TimeSpan.TryParseExact(text.Text, @"hh\:mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _))
                 text.Text = null;
