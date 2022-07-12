@@ -229,66 +229,102 @@ namespace YouTubeStuff {
         private void Download(Video video) {
             string outDir = Config.Settings.OutDir;
             if (!String.IsNullOrEmpty(video.Playlist)) outDir += $"\\{video.Playlist}\\";
+            string output = $"{outDir}\\%(title)s.%(ext)s";
 
-            using Process downloader = new();
-            downloader.StartInfo.FileName = Config.Settings.UtilsDir + "yt-dlp.exe";
-            downloader.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
+            using Process ytdl = new();
+            ytdl.StartInfo.FileName = Config.Settings.UtilsDir + "yt-dlp.exe";
+            ytdl.StartInfo.WorkingDirectory = Config.Settings.UtilsDir;
+            ytdl.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
+            if (!Config.Settings.ShowWindows) ytdl.StartInfo.CreateNoWindow = true;
+
+            TimeSpan? duration = null;
 
             // Set Start time and End time
-            if (video.StartTime != null && video.EndTime != null)
-                downloader.StartInfo.Arguments += $" --postprocessor-args \"-ss {video.StartTime} -to {video.EndTime}\" ";
+            if (video.StartTime != null || video.EndTime != null) {
+                if (video.StartTime != null && video.EndTime != null) {
+                    string[] startTimeParts = video.StartTime.Split(':');
+                    TimeSpan startTime = new(Convert.ToInt32((startTimeParts.Length > 2) ? startTimeParts[^3] : 0), Convert.ToInt32(startTimeParts[^2]), Convert.ToInt32(startTimeParts[^1]));
+                    string startTimePadded = startTime.Subtract(TimeSpan.FromSeconds(8)).ToString();
+                    if (startTimePadded.Contains('-'))
+                        startTimePadded = "00:00";
 
-            else if (video.StartTime == null && video.EndTime != null)
-                downloader.StartInfo.Arguments += $" --postprocessor-args \"-ss 00:00 -to {video.EndTime}\" ";
+                    string[] endTimeParts = video.EndTime.Split(':');
+                    TimeSpan endTime = new(Convert.ToInt32((endTimeParts.Length > 2) ? endTimeParts[^3] : 0), Convert.ToInt32(endTimeParts[^2]), Convert.ToInt32(endTimeParts[^1]));
 
-            else if (video.StartTime != null && video.EndTime == null)
-                downloader.StartInfo.Arguments += $" --postprocessor-args \"-ss {video.StartTime}\" ";
+                    duration = endTime.Subtract(startTime);
 
-            downloader.EnableRaisingEvents = true;
-            downloader.StartInfo.Arguments += " --newline ";
+                    output = $"{outDir}\\%(title)s_temp.%(ext)s";
+                    if (Config.Settings.OnlyDownloadSegment) 
+                        ytdl.StartInfo.Arguments += $" --external-downloader ffmpeg --external-downloader-args \"ffmpeg_i:-ss {startTimePadded} -to {video.EndTime}\" ";
+                    ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -sseof -{duration} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
+                    ytdl.StartInfo.Arguments += $" --exec \"del %(filepath)q\" ";
+                }
+                    
+
+                else if (video.StartTime == null && video.EndTime != null) {
+                    ytdl.StartInfo.Arguments += $" --external-downloader ffmpeg --external-downloader-args \"ffmpeg_i:-ss 00:00 -to {video.EndTime}\" ";
+                }
+                    
+
+                else if (video.StartTime != null && video.EndTime == null) {
+                    string[] startTimeParts = video.StartTime.Split(':');
+                    TimeSpan startTime = new(Convert.ToInt32((startTimeParts.Length > 2) ? startTimeParts[^3] : 0), Convert.ToInt32(startTimeParts[^2]), Convert.ToInt32(startTimeParts[^1]));
+                    string startTimePadded = startTime.Subtract(TimeSpan.FromSeconds(8)).ToString();
+                    if (startTimePadded.Contains('-'))
+                        startTimePadded = "00:00";
+
+                    output = $"{outDir}\\%(title)s_temp.%(ext)s";
+                    if (Config.Settings.OnlyDownloadSegment)
+                        ytdl.StartInfo.Arguments += $" --external-downloader ffmpeg --external-downloader-args \"ffmpeg_i:-ss {startTimePadded}\" ";
+                    ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -ss {video.StartTime} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
+                    ytdl.StartInfo.Arguments += $" --exec \"del %(filepath)q\" ";
+                }
+            }
+
+           
+            
 
             if (video.Site == "YouTube") {
                 // Check for cookies.txt
                 if (File.Exists(Path.Combine(Config.Settings.UtilsDir, "cookies.txt"))) 
-                    downloader.StartInfo.Arguments += $" --cookies \"{Path.Combine(Config.Settings.UtilsDir, "cookies.txt")}\" ";
+                    ytdl.StartInfo.Arguments += $" --cookies \"{Path.Combine(Config.Settings.UtilsDir, "cookies.txt")}\" ";
 
                 // Video
                 if (Config.Settings.ExportType == 0) {
                     // Original
                     if (Config.Settings.ExportFormatVideo == 0)
-                        downloader.StartInfo.Arguments += $"--format bestvideo+bestaudio {video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
+                        ytdl.StartInfo.Arguments += $"--format bestvideo+bestaudio {video.Link} -o \"{output}\"";
 
                     // MP4
                     else if (Config.Settings.ExportFormatVideo == 1)
-                        downloader.StartInfo.Arguments += $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 {video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
+                        ytdl.StartInfo.Arguments += $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 {video.Link} -o \"{output}\"";
                 }
                 //Audio
                 else if (Config.Settings.ExportType == 1) {
                     // FLAC
                     if (Config.Settings.ExportFormatVideo == 0)
-                        downloader.StartInfo.Arguments += $"-f bestaudio -x --audio-format flac {video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
+                        ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format flac {video.Link} -o \"{output}\"";
 
                     // MP3
                     else if (Config.Settings.ExportFormatVideo == 1)
-                        downloader.StartInfo.Arguments += $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
+                        ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{output}\"";
                 }
             }
 
             else if (video.Site == "Twitter") {
-                downloader.StartInfo.Arguments = $"{video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
+                ytdl.StartInfo.Arguments = $"{video.Link} -o \"{output}\"";
             }
 
             else if (video.Site == "Reddit") {
-                downloader.StartInfo.Arguments = $"{video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
+                ytdl.StartInfo.Arguments = $"{video.Link} -o \"{output}\"";
             }
 
             else if (video.Site == "Instagram") {
-                downloader.StartInfo.Arguments = $"{video.Link} -o \"{outDir}\\%(title)s.%(ext)s\"";
+                ytdl.StartInfo.Arguments = $"{video.Link} -o \"{output}\"";
             }
 
-            if (!Config.Settings.ShowWindows) downloader.StartInfo.CreateNoWindow = true;
-            downloader.Start();
-            downloader.WaitForExit();
+            ytdl.Start();
+            ytdl.WaitForExit();
         }
 
         private async void ButtonSave_Click(object sender, RoutedEventArgs e) {
@@ -404,8 +440,8 @@ namespace YouTubeStuff {
         private void FinalValidationTextBox (object sender, RoutedEventArgs e) {
             TextBox text = sender as TextBox;
             if (!TimeSpan.TryParseExact(text.Text, @"m\:ss", System.Globalization.CultureInfo.CurrentCulture, out _) 
-                && !TimeSpan.TryParseExact(text.Text, @"mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _) 
-                && !TimeSpan.TryParseExact(text.Text, @"h\:mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _) 
+                && !TimeSpan.TryParseExact(text.Text, @"mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _)
+                && !TimeSpan.TryParseExact(text.Text, @"h\:mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _)
                 && !TimeSpan.TryParseExact(text.Text, @"hh\:mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _))
                 text.Text = null;
         }

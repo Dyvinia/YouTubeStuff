@@ -23,6 +23,7 @@ namespace YouTubeStuff {
         public bool UpdateChecker { get; set; } = true;
         public bool ShowWindows { get; set; } = false;
         public bool PasteOnStartup { get; set; } = true;
+        public bool OnlyDownloadSegment { get; set; } = false;
 
         public string AdditionalArgs { get; set; } = "";
         public string OutDir { get; set; } = App.BaseDir + "Output";
