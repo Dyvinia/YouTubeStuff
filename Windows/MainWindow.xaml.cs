@@ -237,34 +237,39 @@ namespace YouTubeStuff {
             ytdl.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
             if (!Config.Settings.ShowWindows) ytdl.StartInfo.CreateNoWindow = true;
 
-            TimeSpan? duration = null;
-
             // Set Start time and End time
             if (video.StartTime != null || video.EndTime != null) {
+
                 if (video.StartTime != null && video.EndTime != null) {
-                    string[] startTimeParts = video.StartTime.Split(':');
-                    TimeSpan startTime = new(Convert.ToInt32((startTimeParts.Length > 2) ? startTimeParts[^3] : 0), Convert.ToInt32(startTimeParts[^2]), Convert.ToInt32(startTimeParts[^1]));
-                    string startTimePadded = startTime.Subtract(TimeSpan.FromSeconds(8)).ToString();
-                    if (startTimePadded.Contains('-'))
-                        startTimePadded = "00:00";
-
-                    string[] endTimeParts = video.EndTime.Split(':');
-                    TimeSpan endTime = new(Convert.ToInt32((endTimeParts.Length > 2) ? endTimeParts[^3] : 0), Convert.ToInt32(endTimeParts[^2]), Convert.ToInt32(endTimeParts[^1]));
-
-                    duration = endTime.Subtract(startTime);
-
                     output = $"{outDir}\\%(title)s_temp.%(ext)s";
-                    if (Config.Settings.OnlyDownloadSegment) 
+                    if (Config.Settings.OnlyDownloadSegment) {
+                        string[] startTimeParts = video.StartTime.Split(':');
+                        TimeSpan startTime = new(Convert.ToInt32((startTimeParts.Length > 2) ? startTimeParts[^3] : 0), Convert.ToInt32(startTimeParts[^2]), Convert.ToInt32(startTimeParts[^1]));
+                        string startTimePadded = startTime.Subtract(TimeSpan.FromSeconds(8)).ToString();
+                        if (startTimePadded.Contains('-'))
+                            startTimePadded = "00:00";
+
+                        string[] endTimeParts = video.EndTime.Split(':');
+                        TimeSpan endTime = new(Convert.ToInt32((endTimeParts.Length > 2) ? endTimeParts[^3] : 0), Convert.ToInt32(endTimeParts[^2]), Convert.ToInt32(endTimeParts[^1]));
+                        TimeSpan duration = endTime.Subtract(startTime);
+
                         ytdl.StartInfo.Arguments += $" --external-downloader ffmpeg --external-downloader-args \"ffmpeg_i:-ss {startTimePadded} -to {video.EndTime}\" ";
-                    ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -sseof -{duration} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
+                        ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -sseof -{duration} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
+                    }
+                    else
+                        ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -ss {video.StartTime} -to {video.EndTime} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
                     ytdl.StartInfo.Arguments += $" --exec \"del %(filepath)q\" ";
-                }
-                    
+                }  
 
                 else if (video.StartTime == null && video.EndTime != null) {
-                    ytdl.StartInfo.Arguments += $" --external-downloader ffmpeg --external-downloader-args \"ffmpeg_i:-ss 00:00 -to {video.EndTime}\" ";
+                    if (Config.Settings.OnlyDownloadSegment)
+                        ytdl.StartInfo.Arguments += $" --external-downloader ffmpeg --external-downloader-args \"ffmpeg_i:-ss 00:00 -to {video.EndTime}\" ";
+                    else {
+                        output = $"{outDir}\\%(title)s_temp.%(ext)s";
+                        ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -ss 00:00 -to {video.EndTime} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
+                        ytdl.StartInfo.Arguments += $" --exec \"del %(filepath)q\" ";
+                    }
                 }
-                    
 
                 else if (video.StartTime != null && video.EndTime == null) {
                     string[] startTimeParts = video.StartTime.Split(':');
@@ -280,8 +285,6 @@ namespace YouTubeStuff {
                     ytdl.StartInfo.Arguments += $" --exec \"del %(filepath)q\" ";
                 }
             }
-
-           
             
 
             if (video.Site == "YouTube") {
