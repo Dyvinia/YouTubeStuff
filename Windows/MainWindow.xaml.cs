@@ -308,11 +308,11 @@ namespace YouTubeStuff {
                 //Audio
                 else if (Config.Settings.ExportType == 1) {
                     // FLAC
-                    if (Config.Settings.ExportFormatVideo == 0)
+                    if (Config.Settings.ExportFormatAudio == 0)
                         ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format flac {video.Link} -o \"{output}\"";
 
                     // MP3
-                    else if (Config.Settings.ExportFormatVideo == 1)
+                    else if (Config.Settings.ExportFormatAudio == 1)
                         ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{output}\"";
                 }
             }
