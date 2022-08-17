@@ -167,17 +167,26 @@ namespace YouTubeStuff {
                 }
                 // Twitter
                 if (link.URL.Contains("twitter.com")) {
-                    using HttpClient client = new();
-                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://noembed.com/embed?url={link.URL}"));
-                    string html = json.html;
-                    HtmlDocument doc = new();
-                    doc.LoadHtml(html);
+                    try {
+                        // Get json from fxtwitter api
+                        string apiLink;
+                        if (link.URL.Contains("fxtwitter.com"))
+                            apiLink = link.URL.Replace("fxtwitter.com", "api.fxtwitter.com");
+                        else if (link.URL.Contains("vxtwitter.com"))
+                            apiLink = link.URL.Replace("vxtwitter.com", "api.fxtwitter.com");
+                        else
+                            apiLink = link.URL.Replace("//twitter.com", "//api.fxtwitter.com");
 
-                    string tweetAuthor = ((string)json.author_url).Split("/").Last();
-                    string tweetContent = $"@{tweetAuthor} - {doc.DocumentNode.SelectNodes("//text()")?.First().InnerText}";
-                    string authorImage = $"https://unavatar.io/twitter/{tweetAuthor}";
+                        using HttpClient client = new();
+                        dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{apiLink}"));
 
-                    Videos.Add(new Video { Title = tweetContent, Link = link.URL, Thumbnail = authorImage, Site = "Twitter" });
+                        string tweetAuthor = json.tweet.author.name;
+                        string tweetContent = json.tweet.text;
+                        string thumbnailURL = json.tweet.media.videos[0].thumbnail_url;
+
+                        Videos.Add(new Video { Title = $"{tweetAuthor} - {tweetContent}", Link = link.URL, Thumbnail = thumbnailURL, Site = "Twitter" });
+                    }
+                    catch { }
                 }
                 // Reddit
                 if (link.URL.Contains("reddit.com")) {
