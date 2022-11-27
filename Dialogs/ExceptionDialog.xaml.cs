@@ -34,9 +34,9 @@ namespace YouTubeStuff.Dialogs {
             message += Environment.NewLine + Environment.NewLine + ex.StackTrace;
             ExceptionText.Text = message;
 
-            if (isCrash) CloseButton.Click += (s, e) => Environment.Exit(0);
-            else CloseButton.Click += (s, e) => Close();
-            CopyButton.Click += (s, e) => Clipboard.SetDataObject(message);
+            if (isCrash) CloseButton.Click += (_, _) => Environment.Exit(0);
+            else CloseButton.Click += (_, _) => Close();
+            CopyButton.Click += (_, _) => Clipboard.SetDataObject(message);
         }
 
         public static void Show(Exception ex, string title, bool isCrash = false, string messagePrefix = null) {

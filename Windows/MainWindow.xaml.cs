@@ -312,7 +312,7 @@ namespace YouTubeStuff {
 
                     // MP4
                     else if (Config.Settings.ExportFormatVideo == 1)
-                        ytdl.StartInfo.Arguments += $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 {video.Link} -o \"{output}\"";
+                        ytdl.StartInfo.Arguments += $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 --postprocessor-args \"-vcodec libx264 -acodec aac\" {video.Link} -o \"{output}\"";
                 }
                 //Audio
                 else if (Config.Settings.ExportType == 1) {
