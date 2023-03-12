@@ -129,7 +129,7 @@ namespace YouTubeStuff {
             ConcurrentDictionary<int, Link> orderedLinks = new(Enumerable.Range(0, links.Count).ToDictionary(i => i + 1, i => links[i]));
             ConcurrentDictionary<int, Video> orderedVideos = new();
 
-            Parallel.ForEach(orderedLinks, linkObject => {
+            await Parallel.ForEachAsync(orderedLinks, async (linkObject, _) => {
                 int index = linkObject.Key;
                 Link link = linkObject.Value;
                 
@@ -138,7 +138,7 @@ namespace YouTubeStuff {
                     // Check if restricted/unembeddable
                     try {
                         using HttpClient client = new();
-                        dynamic json = JsonConvert.DeserializeObject<dynamic>(client.GetStringAsync($"https://youtube.com/oembed?url={link.URL}").Result);
+                        dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://youtube.com/oembed?url={link.URL}"));
                         string videoTitle = json.title;
                         string videoID = ((string)json.thumbnail_url).Split("/")[^2];
 
@@ -184,7 +184,7 @@ namespace YouTubeStuff {
                             apiLink = link.URL.Replace("//twitter.com", "//api.fxtwitter.com");
 
                         using HttpClient client = new();
-                        dynamic json = JsonConvert.DeserializeObject<dynamic>(client.GetStringAsync($"{apiLink}").Result);
+                        dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{apiLink}"));
 
                         string tweetAuthor = json.tweet.author.name;
                         string tweetContent = json.tweet.text;
@@ -197,7 +197,7 @@ namespace YouTubeStuff {
                 // Reddit
                 if (link.URL.Contains("reddit.com")) {
                     using HttpClient client = new();
-                    dynamic json = JsonConvert.DeserializeObject<dynamic>(client.GetStringAsync($"{link.URL}.json").Result);
+                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{link.URL}.json"));
                     string videoTitle = json[0].data.children[0].data.title;
                     string videoThumbnail = json[0].data.children[0].data.thumbnail;
 
