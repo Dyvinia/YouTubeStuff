@@ -13,11 +13,11 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Shell;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Microsoft.Win32;
 using Newtonsoft.Json;
-using HtmlAgilityPack;
 
 namespace YouTubeStuff {
     /// <summary>
@@ -126,13 +126,19 @@ namespace YouTubeStuff {
             int currentProgress = 1;
             progress.Report(currentProgress);
 
-            foreach (Link link in links) {
+            ConcurrentDictionary<int, Link> orderedLinks = new(Enumerable.Range(0, links.Count).ToDictionary(i => i + 1, i => links[i]));
+            ConcurrentDictionary<int, Video> orderedVideos = new();
+
+            Parallel.ForEach(orderedLinks, linkObject => {
+                int index = linkObject.Key;
+                Link link = linkObject.Value;
+                
                 // YouTube
                 if (link.URL.Contains("youtu")) {
                     // Check if restricted/unembeddable
                     try {
                         using HttpClient client = new();
-                        dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://youtube.com/oembed?url={link.URL}"));
+                        dynamic json = JsonConvert.DeserializeObject<dynamic>(client.GetStringAsync($"https://youtube.com/oembed?url={link.URL}").Result);
                         string videoTitle = json.title;
                         string videoID = ((string)json.thumbnail_url).Split("/")[^2];
 
@@ -140,7 +146,7 @@ namespace YouTubeStuff {
                         if (!IsValidImage(thumbnailURL))
                             thumbnailURL = $"https://img.youtube.com/vi/{videoID}/mqdefault.jpg";
 
-                        Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
+                        orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
                     }
                     catch {
                         if (link.URL.Contains("www.youtube.com/watch?v=")) {
@@ -151,7 +157,7 @@ namespace YouTubeStuff {
                             if (!IsValidImage(thumbnailURL))
                                 videoTitle = $"Unknown YouTube Video (ID: {videoID})";
 
-                            Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
+                            orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
                         }
                         else if (link.URL.Contains("youtu.be/")) {
                             string videoID = link.URL.Split("/")[3];
@@ -161,7 +167,7 @@ namespace YouTubeStuff {
                             if (!IsValidImage(thumbnailURL))
                                 videoTitle = $"Unknown YouTube Video (ID: {videoID})";
 
-                            Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
+                            orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
                         }
                     }
                 }
@@ -178,34 +184,38 @@ namespace YouTubeStuff {
                             apiLink = link.URL.Replace("//twitter.com", "//api.fxtwitter.com");
 
                         using HttpClient client = new();
-                        dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{apiLink}"));
+                        dynamic json = JsonConvert.DeserializeObject<dynamic>(client.GetStringAsync($"{apiLink}").Result);
 
                         string tweetAuthor = json.tweet.author.name;
                         string tweetContent = json.tweet.text;
                         string thumbnailURL = json.tweet.media.videos[0].thumbnail_url;
 
-                        Videos.Add(new Video { Title = $"{tweetAuthor} - {tweetContent}", Link = link.URL, Thumbnail = thumbnailURL, Site = "Twitter" });
+                        orderedVideos.TryAdd(index, new Video { Title = $"{tweetAuthor} - {tweetContent}", Link = link.URL, Thumbnail = thumbnailURL, Site = "Twitter" });
                     }
                     catch { }
                 }
                 // Reddit
                 if (link.URL.Contains("reddit.com")) {
                     using HttpClient client = new();
-                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{link.URL}.json"));
+                    dynamic json = JsonConvert.DeserializeObject<dynamic>(client.GetStringAsync($"{link.URL}.json").Result);
                     string videoTitle = json[0].data.children[0].data.title;
                     string videoThumbnail = json[0].data.children[0].data.thumbnail;
 
-                    Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Reddit" });
+                    orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Reddit" });
                 }
                 // Instagram
                 if (link.URL.Contains("instagram.com")) {
                     string videoTitle = $"Instagram Video ({new Uri(link.URL).AbsolutePath[1..^1]})";
                     string videoThumbnail = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/600px-Instagram_logo_2022.svg.png";
 
-                    Videos.Add(new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Instagram" });
+                    orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Instagram" });
                 }
 
                 progress.Report(currentProgress++);
+            });
+
+            foreach (Video video in orderedVideos.Values) {
+                Videos.Add(video);
             }
             Mouse.OverrideCursor = null;
         }
@@ -241,10 +251,18 @@ namespace YouTubeStuff {
             string output = $"{outDir}\\%(title)s.%(ext)s";
 
             using Process ytdl = new();
-            ytdl.StartInfo.FileName = Config.Settings.UtilsDir + "yt-dlp.exe";
             ytdl.StartInfo.WorkingDirectory = Config.Settings.UtilsDir;
-            ytdl.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
-            if (!Config.Settings.ShowWindows) ytdl.StartInfo.CreateNoWindow = true;
+
+            if (Config.Settings.ShowWindows) {
+                ytdl.StartInfo.FileName = "cmd.exe";
+                ytdl.StartInfo.Arguments += $"/K {Config.Settings.UtilsDir + "yt-dlp.exe"} {Config.Settings.AdditionalArgs} ";
+            }
+            else {
+                ytdl.StartInfo.FileName = Config.Settings.UtilsDir + "yt-dlp.exe";
+                ytdl.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
+                ytdl.StartInfo.CreateNoWindow = true;
+            }
+                
 
             // Set Start time and End time
             if (video.StartTime != null || video.EndTime != null) {
