@@ -129,9 +129,9 @@ namespace YouTubeStuff {
             ConcurrentDictionary<int, Link> orderedLinks = new(Enumerable.Range(0, links.Count).ToDictionary(i => i + 1, i => links[i]));
             ConcurrentDictionary<int, Video> orderedVideos = new();
 
-            await Parallel.ForEachAsync(orderedLinks, async (linkObject, _) => {
-                int index = linkObject.Key;
-                Link link = linkObject.Value;
+            await Parallel.ForEachAsync(orderedLinks, async (indexedLink, _) => {
+                int index = indexedLink.Key;
+                Link link = indexedLink.Value;
                 
                 // YouTube
                 if (link.URL.Contains("youtu")) {
