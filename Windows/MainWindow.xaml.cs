@@ -83,8 +83,10 @@ namespace YouTubeStuff {
             List<string> linkBoxList = LinkBox.Text.Split(separators).ToList();
 
             foreach (string link in linkBoxList.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute))) {
+                // youtube playlist
                 if (link.Contains("youtu") && link.Contains("playlist")) {
                     Mouse.OverrideCursor = Cursors.Wait;
+
                     ProcessStartInfo p = new() {
                         FileName = Config.Settings.UtilsDir + "yt-dlp.exe",
                         CreateNoWindow = true,
@@ -103,6 +105,7 @@ namespace YouTubeStuff {
                     foreach (dynamic item in json) {
                         links.Add(new Link { URL = (string)item.url, Playlist = playlistTitle });
                     }
+
                     Mouse.OverrideCursor = null;
                 }
                 else {
@@ -127,8 +130,7 @@ namespace YouTubeStuff {
         private async Task GenerateList(List<Link> links, IProgress<int> progress) {
             Mouse.OverrideCursor = Cursors.Wait;
             Videos.Clear();
-            int currentProgress = 1;
-            progress.Report(currentProgress);
+            progress.Report(1);
 
             ConcurrentDictionary<int, Link> orderedLinks = new(Enumerable.Range(0, links.Count).ToDictionary(i => i + 1, i => links[i]));
             ConcurrentDictionary<int, Video> orderedVideos = new();
@@ -175,6 +177,7 @@ namespace YouTubeStuff {
                         }
                     }
                 }
+
                 // Twitter
                 if (link.URL.Contains("twitter.com")) {
                     try {
@@ -198,6 +201,7 @@ namespace YouTubeStuff {
                     }
                     catch { }
                 }
+
                 // Reddit
                 if (link.URL.Contains("reddit.com")) {
                     using HttpClient client = new();
@@ -207,6 +211,7 @@ namespace YouTubeStuff {
 
                     orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Reddit" });
                 }
+
                 // Instagram
                 if (link.URL.Contains("instagram.com")) {
                     string videoTitle = $"Instagram Video ({new Uri(link.URL).AbsolutePath[1..^1]})";
@@ -215,7 +220,7 @@ namespace YouTubeStuff {
                     orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Instagram" });
                 }
 
-                progress.Report(currentProgress++);
+                progress.Report(orderedVideos.Count);
             });
 
             foreach (Video video in orderedVideos.Values) {
@@ -266,7 +271,6 @@ namespace YouTubeStuff {
                 ytdl.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
                 ytdl.StartInfo.CreateNoWindow = true;
             }
-                
 
             // Set Start time and End time
             if (video.StartTime != null || video.EndTime != null) {
@@ -320,44 +324,38 @@ namespace YouTubeStuff {
                 }
             }
 
+            switch (video.Site) {
+                case "YouTube":
+                    // Check for cookies.txt
+                    if (File.Exists(Path.Combine(Config.Settings.UtilsDir, "cookies.txt")))
+                        ytdl.StartInfo.Arguments += $" --cookies \"{Path.Combine(Config.Settings.UtilsDir, "cookies.txt")}\" ";
 
-            if (video.Site == "YouTube") {
-                // Check for cookies.txt
-                if (File.Exists(Path.Combine(Config.Settings.UtilsDir, "cookies.txt"))) 
-                    ytdl.StartInfo.Arguments += $" --cookies \"{Path.Combine(Config.Settings.UtilsDir, "cookies.txt")}\" ";
+                    // Video
+                    if (Config.Settings.ExportType == 0) {
+                        // Original
+                        if (Config.Settings.ExportFormatVideo == 0)
+                            ytdl.StartInfo.Arguments += $"--format bestvideo+bestaudio {video.Link} -o \"{output}\"";
 
-                // Video
-                if (Config.Settings.ExportType == 0) {
-                    // Original
-                    if (Config.Settings.ExportFormatVideo == 0)
-                        ytdl.StartInfo.Arguments += $"--format bestvideo+bestaudio {video.Link} -o \"{output}\"";
+                        // MP4
+                        else if (Config.Settings.ExportFormatVideo == 1)
+                            ytdl.StartInfo.Arguments += $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 --postprocessor-args \"-vcodec libx264 -acodec aac\" {video.Link} -o \"{output}\"";
+                    }
+                    //Audio
+                    else if (Config.Settings.ExportType == 1) {
+                        // FLAC
+                        if (Config.Settings.ExportFormatAudio == 0)
+                            ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format flac {video.Link} -o \"{output}\"";
 
-                    // MP4
-                    else if (Config.Settings.ExportFormatVideo == 1)
-                        ytdl.StartInfo.Arguments += $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 --postprocessor-args \"-vcodec libx264 -acodec aac\" {video.Link} -o \"{output}\"";
-                }
-                //Audio
-                else if (Config.Settings.ExportType == 1) {
-                    // FLAC
-                    if (Config.Settings.ExportFormatAudio == 0)
-                        ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format flac {video.Link} -o \"{output}\"";
+                        // MP3
+                        else if (Config.Settings.ExportFormatAudio == 1)
+                            ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{output}\"";
+                    }
+                    break;
 
-                    // MP3
-                    else if (Config.Settings.ExportFormatAudio == 1)
-                        ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{output}\"";
-                }
-            }
-
-            else if (video.Site == "Twitter") {
-                ytdl.StartInfo.Arguments = $"{video.Link} -o \"{output}\"";
-            }
-
-            else if (video.Site == "Reddit") {
-                ytdl.StartInfo.Arguments = $"{video.Link} -o \"{output}\"";
-            }
-
-            else if (video.Site == "Instagram") {
-                ytdl.StartInfo.Arguments = $"{video.Link} -o \"{output}\"";
+                // Reddit, Twitter, Instagram
+                default:
+                    ytdl.StartInfo.Arguments = $"{video.Link} -o \"{output}\"";
+                    break;
             }
 
             ytdl.Start();

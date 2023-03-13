@@ -52,7 +52,8 @@ namespace YouTubeStuff {
 
         protected override async void OnStartup(StartupEventArgs e) {
             MainWindow = new MainWindow();
-            if (!File.Exists(Config.Settings.UtilsDir + "yt-dlp.exe"))
+
+            if (await CheckUtils())
                 await ShowPopup(new DownloadWindow());
             MainWindow.Show();
 
@@ -66,6 +67,29 @@ namespace YouTubeStuff {
             popup.Show();
             popup.Focus();
             return task.Task;
+        }
+
+        // returns true if needs update/download
+        private async Task<bool> CheckUtils() {
+            if (File.Exists(Config.Settings.UtilsDir + "yt-dlp.exe")) {
+                using HttpClient client = new();
+                client.DefaultRequestHeaders.Add("User-Agent", "request");
+
+                dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest"));
+
+                Version local = new(FileVersionInfo.GetVersionInfo(Config.Settings.UtilsDir + "yt-dlp.exe").FileVersion);
+                Version latest = new((string)json.tag_name);
+
+                if (local.CompareTo(latest) < 0)
+                    return true;
+            }
+            else
+                return true;
+
+            if (!File.Exists(Config.Settings.UtilsDir + "ffmpeg.exe"))
+                return true;
+
+            return false;
         }
 
         public async void CheckVersion(string repoAuthor, string repoName) {
