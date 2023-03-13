@@ -71,6 +71,8 @@ namespace YouTubeStuff {
                     });
                 }
             }
+
+            Config.Save();
         }
 
         private async void LinkChanged() {
