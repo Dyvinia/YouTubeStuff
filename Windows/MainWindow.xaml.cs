@@ -76,11 +76,13 @@ namespace YouTubeStuff {
         }
 
         private async void LinkChanged() {
-            string[] strings = String.Concat(LinkBox.Text.Where(c => !Char.IsWhiteSpace(c))).Split(",");
-
             List<Link> links = new();
 
-            foreach (string link in strings.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute))) {
+            // Different separators
+            char[] separators = new char[] { ',', ' ', ';' };
+            List<string> linkBoxList = LinkBox.Text.Split(separators).ToList();
+
+            foreach (string link in linkBoxList.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute))) {
                 if (link.Contains("youtu") && link.Contains("playlist")) {
                     Mouse.OverrideCursor = Cursors.Wait;
                     ProcessStartInfo p = new() {
