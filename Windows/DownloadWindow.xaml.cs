@@ -51,7 +51,7 @@ namespace YouTubeStuff {
 
         public async static Task DownloadYTDL(IProgress<double> progress) {
             string destination = Config.Settings.UtilsDir + "\\yt-dlp.exe";
-            string url = "https://github.com/yt-dlp/yt-dlp/releases/download/2023.03.04/yt-dlp.exe";
+            string url = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe";
 
             await Downloader.Download(url, destination, progress);
         }
