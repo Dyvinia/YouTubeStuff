@@ -51,26 +51,17 @@ namespace YouTubeStuff {
         }
 
         protected override async void OnStartup(StartupEventArgs e) {
-            MainWindow = new MainWindow();
+            new MainWindow().Show();
 
             if (await CheckUtils())
-                await ShowPopup(new DownloadWindow());
-            MainWindow.Show();
+                new DownloadWindow().ShowDialog();
 
             if (Config.Settings.UpdateChecker)
-                CheckVersion("Dyvinia", "YouTubeStuff");
-        }
-
-        private Task ShowPopup<TPopup>(TPopup popup) where TPopup : Window {
-            var task = new TaskCompletionSource<object>();
-            popup.Closed += (s, a) => task.SetResult(null);
-            popup.Show();
-            popup.Focus();
-            return task.Task;
+                await CheckVersion("Dyvinia", "YouTubeStuff");
         }
 
         // returns true if needs update/download
-        private async Task<bool> CheckUtils() {
+        private static async Task<bool> CheckUtils() {
             if (File.Exists(Config.Settings.UtilsDir + "yt-dlp.exe")) {
                 using HttpClient client = new();
                 client.DefaultRequestHeaders.Add("User-Agent", "request");
@@ -92,7 +83,7 @@ namespace YouTubeStuff {
             return false;
         }
 
-        public async void CheckVersion(string repoAuthor, string repoName) {
+        public async Task CheckVersion(string repoAuthor, string repoName) {
             try {
                 using HttpClient client = new();
                 client.DefaultRequestHeaders.Add("User-Agent", "request");
