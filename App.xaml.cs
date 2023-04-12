@@ -83,7 +83,7 @@ namespace YouTubeStuff {
             return false;
         }
 
-        public async Task CheckVersion(string repoAuthor, string repoName) {
+        public static async Task CheckVersion(string repoAuthor, string repoName) {
             try {
                 using HttpClient client = new();
                 client.DefaultRequestHeaders.Add("User-Agent", "request");

@@ -79,7 +79,7 @@ namespace YouTubeStuff {
             List<Link> links = new();
 
             // Different separators
-            char[] separators = new char[] { ',', ' ', ';' };
+            char[] separators = { ',', ' ', ';' };
             List<string> linkBoxList = LinkBox.Text.Split(separators).ToList();
 
             foreach (string link in linkBoxList.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute))) {
