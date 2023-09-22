@@ -60,6 +60,7 @@
                                 </ComboBox>
                                 <ComboBox x:Name="FormatAudioComboBox" Visibility="Collapsed" SelectedIndex="{Binding Path=(local:Config.ExportFormatAudio), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="Only applies to YouTube Videos">
                                     <ComboBoxItem Content="FLAC"/>
+                                    <ComboBoxItem Content="WAV"/>
                                     <ComboBoxItem Content="MP3"/>
                                 </ComboBox>
                             </Grid>

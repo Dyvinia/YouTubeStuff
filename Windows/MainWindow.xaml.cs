@@ -346,8 +346,12 @@ namespace YouTubeStuff {
                         if (Config.Settings.ExportFormatAudio == 0)
                             ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format flac {video.Link} -o \"{output}\"";
 
-                        // MP3
+                        // WAV
                         else if (Config.Settings.ExportFormatAudio == 1)
+                            ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format wav {video.Link} -o \"{output}\"";
+
+                        // MP3
+                        else if (Config.Settings.ExportFormatAudio == 2)
                             ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{output}\"";
                     }
                     break;
