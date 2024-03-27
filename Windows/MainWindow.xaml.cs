@@ -2,20 +2,20 @@
 using System.IO;
 using System.Linq;
 using System.Media;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using System.Web;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Shell;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 
@@ -24,22 +24,12 @@ namespace YouTubeStuff {
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-
-        public class Video {
-            public string Title { get; set; }
-            public string Link { get; set; }
-            public string Thumbnail { get; set; }
-            public string Site { get; set; }
-            public string Playlist { get; set; }
-            public string StartTime { get; set; }
-            public string EndTime { get; set; }
-        }
-        public ObservableCollection<Video> Videos = new();
-
         public class Link {
             public string URL { get; set; }
             public string Playlist { get; set; }
         }
+
+        public ObservableCollection<Video> Videos = [];
 
         public MainWindow() {
             InitializeComponent();
@@ -76,13 +66,12 @@ namespace YouTubeStuff {
         }
 
         private async void LinkChanged() {
-            List<Link> links = new();
+            List<Link> links = [];
 
             // Different separators
-            char[] separators = { ',', ' ', ';' };
-            List<string> linkBoxList = LinkBox.Text.Split(separators).ToList();
+            char[] separators = [',', ' ', ';'];
 
-            foreach (string link in linkBoxList.Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute))) {
+            foreach (string link in LinkBox.Text.Split(separators).Where(s => Uri.IsWellFormedUriString(s, UriKind.Absolute))) {
                 // youtube playlist
                 if (link.Contains("youtu") && link.Contains("playlist")) {
                     Mouse.OverrideCursor = Cursors.Wait;
@@ -96,7 +85,7 @@ namespace YouTubeStuff {
                     Process process = Process.Start(p);
                     string output = process.StandardOutput.ReadToEnd();
                     output = $"[{output.Replace("\n", ",")}]";
-                    output = output.Remove(output.LastIndexOf(","), 1);
+                    output = output.Remove(output.LastIndexOf(','), 1);
                     dynamic[] json = JsonConvert.DeserializeObject<dynamic[]>(output);
 
                     using HttpClient client = new();
@@ -115,12 +104,15 @@ namespace YouTubeStuff {
 
             IProgress<int> progress = new Progress<int>(p => {
                 ProgressBar.Value = p;
-                ProgressBar.Maximum = links.Count;
+                ProgressBar.Maximum = links.Count + 1;
+                TaskbarItemInfo.ProgressValue = p / (links.Count + 1d);
             });
 
-            if (links.Count > 5) ProgressBar.Visibility = Visibility.Visible;
+            ProgressBar.Visibility = Visibility.Visible;
+            TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Normal;
             await GenerateList(links, progress);
             ProgressBar.Visibility = Visibility.Collapsed;
+            TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
 
             if (Videos.Count > 0) VideoListBox.SelectedIndex = 0;
 
@@ -138,86 +130,93 @@ namespace YouTubeStuff {
             await Parallel.ForEachAsync(orderedLinks, async (indexedLink, _) => {
                 int index = indexedLink.Key;
                 Link link = indexedLink.Value;
-                
+
+                Process ytdlpJson = new() {
+                    StartInfo = new() {
+                        FileName = Path.Combine(Config.Settings.UtilsDir, "yt-dlp.exe"),
+                        Arguments = $"-J {link.URL}",
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                    }
+                };
+                ytdlpJson.Start();
+                string output = ytdlpJson.StandardOutput.ReadToEnd();
+                JsonElement rootElement = JsonDocument.Parse(output).RootElement;
+
                 // YouTube
                 if (link.URL.Contains("youtu")) {
-                    // Check if restricted/unembeddable
-                    try {
-                        using HttpClient client = new();
-                        dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"https://youtube.com/oembed?url={link.URL}"));
-                        string videoTitle = json.title;
-                        string videoID = ((string)json.thumbnail_url).Split("/")[^2];
+                    string videoTitle = rootElement.GetProperty("title").GetString();
+                    string videoID = rootElement.GetProperty("id").GetString();
+                    string thumbnailURL = rootElement.GetProperty("thumbnail").GetString();
+                    rootElement.TryGetProperty("duration", out JsonElement duration);
 
-                        string thumbnailURL = $"https://img.youtube.com/vi/{videoID}/maxresdefault.jpg";
-                        if (!IsValidImage(thumbnailURL))
-                            thumbnailURL = $"https://img.youtube.com/vi/{videoID}/mqdefault.jpg";
-
-                        orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
-                    }
-                    catch {
-                        if (link.URL.Contains("www.youtube.com/watch?v=")) {
-                            string videoID = HttpUtility.ParseQueryString(new Uri(link.URL).Query).Get("v");
-                            string videoTitle = $"Restricted YouTube Video (ID: {videoID})";
-                            string thumbnailURL = $"https://img.youtube.com/vi/{videoID}/mqdefault.jpg";
-
-                            if (!IsValidImage(thumbnailURL))
-                                videoTitle = $"Unknown YouTube Video (ID: {videoID})";
-
-                            orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
-                        }
-                        else if (link.URL.Contains("youtu.be/")) {
-                            string videoID = link.URL.Split("/")[3];
-                            string videoTitle = $"Restricted YouTube Video (ID: {videoID})";
-                            string thumbnailURL = $"https://img.youtube.com/vi/{videoID}/mqdefault.jpg";
-
-                            if (!IsValidImage(thumbnailURL))
-                                videoTitle = $"Unknown YouTube Video (ID: {videoID})";
-
-                            orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Site = "YouTube", Playlist = link.Playlist });
-                        }
-                    }
+                    orderedVideos.TryAdd(index, new() { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Duration = duration.GetDouble(), Site = "YouTube", Playlist = link.Playlist });
                 }
 
                 // Twitter
-                if (link.URL.Contains("twitter.com")) {
+                if (link.URL.Contains("twitter.com") || link.URL.Contains("//x.com")) {
                     try {
-                        // Get json from fxtwitter api
-                        string apiLink;
-                        if (link.URL.Contains("fxtwitter.com"))
-                            apiLink = link.URL.Replace("fxtwitter.com", "api.fxtwitter.com");
-                        else if (link.URL.Contains("vxtwitter.com"))
-                            apiLink = link.URL.Replace("vxtwitter.com", "api.fxtwitter.com");
-                        else
-                            apiLink = link.URL.Replace("//twitter.com", "//api.fxtwitter.com");
+                        string videoTitle = rootElement.GetProperty("title").GetString();
+                        string thumbnailURL = rootElement.GetProperty("entries")[0].GetProperty("thumbnail").GetString();
+                        rootElement.TryGetProperty("duration", out JsonElement duration);
 
-                        using HttpClient client = new();
-                        dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{apiLink}"));
-
-                        string tweetAuthor = json.tweet.author.name;
-                        string tweetContent = json.tweet.text;
-                        string thumbnailURL = json.tweet.media.videos[0].thumbnail_url;
-
-                        orderedVideos.TryAdd(index, new Video { Title = $"{tweetAuthor} - {tweetContent}", Link = link.URL, Thumbnail = thumbnailURL, Site = "Twitter" });
+                        orderedVideos.TryAdd(index, new() { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Duration = duration.GetDouble(), Site = "Twitter" });
                     }
-                    catch { }
+                    catch {
+                        try {
+                            // Get json from fxtwitter api
+                            string apiLink;
+                            if (link.URL.Contains("fxtwitter.com"))
+                                apiLink = link.URL.Replace("fxtwitter.com", "api.fxtwitter.com");
+                            else if (link.URL.Contains("vxtwitter.com"))
+                                apiLink = link.URL.Replace("vxtwitter.com", "api.fxtwitter.com");
+                            else if (link.URL.Contains("//x.com"))
+                                apiLink = link.URL.Replace("//x.com", "//api.fxtwitter.com");
+                            else
+                                apiLink = link.URL.Replace("//twitter.com", "//api.fxtwitter.com");
+
+                            using HttpClient client = new();
+                            dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync(apiLink, CancellationToken.None));
+
+                            string tweetAuthor = json.tweet.author.name;
+                            string tweetContent = json.tweet.text;
+                            string thumbnailURL = json.tweet.media.videos[0].thumbnail_url;
+
+                            orderedVideos.TryAdd(index, new() { Title = $"{tweetAuthor} - {tweetContent}", Link = link.URL, Thumbnail = thumbnailURL, Site = "Twitter" });
+                        }
+                        catch {
+                            string videoTitle = rootElement.GetProperty("title").GetString();
+
+                            orderedVideos.TryAdd(index, new() { Title = videoTitle, Link = link.URL, Thumbnail = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Logo_of_Twitter.svg/512px-Logo_of_Twitter.svg.png", Site = "Twitter" });
+                        }
+                    }
                 }
 
                 // Reddit
                 if (link.URL.Contains("reddit.com")) {
                     using HttpClient client = new();
-                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{link.URL}.json"));
+                    dynamic json = JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync($"{link.URL}.json", CancellationToken.None));
                     string videoTitle = json[0].data.children[0].data.title;
                     string videoThumbnail = json[0].data.children[0].data.thumbnail;
 
-                    orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Reddit" });
+                    orderedVideos.TryAdd(index, new() { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Reddit" });
                 }
 
                 // Instagram
                 if (link.URL.Contains("instagram.com")) {
-                    string videoTitle = $"Instagram Video ({new Uri(link.URL).AbsolutePath[1..^1]})";
-                    string videoThumbnail = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/600px-Instagram_logo_2022.svg.png";
+                    try {
+                        string videoTitle = rootElement.GetProperty("title").GetString();
+                        string thumbnailURL = rootElement.GetProperty("thumbnail").GetString();
+                        rootElement.TryGetProperty("duration", out JsonElement duration);
 
-                    orderedVideos.TryAdd(index, new Video { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Instagram" });
+                        orderedVideos.TryAdd(index, new() { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Duration = duration.GetDouble(), Site = "Instagram" });
+                    }
+                    catch {
+                        string videoTitle = $"Instagram Video ({new Uri(link.URL).AbsolutePath[1..^1]})";
+                        string videoThumbnail = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/600px-Instagram_logo_2022.svg.png";
+
+                        orderedVideos.TryAdd(index, new() { Title = videoTitle, Link = link.URL, Thumbnail = videoThumbnail, Site = "Instagram" });
+                    }
                 }
 
                 progress.Report(orderedVideos.Count);
@@ -254,7 +253,7 @@ namespace YouTubeStuff {
                 DownloadAllButton.IsEnabled = false;
         }
 
-        private void Download(Video video) {
+        private static void Download(Video video, IProgress<int> progress = null) {
             string outDir = Config.Settings.OutDir;
             if (!String.IsNullOrEmpty(video.Playlist)) outDir += $"\\{video.Playlist}\\";
             string output = $"{outDir}\\%(title)s.%(ext)s";
@@ -270,59 +269,13 @@ namespace YouTubeStuff {
                 ytdl.StartInfo.FileName = Config.Settings.UtilsDir + "yt-dlp.exe";
                 ytdl.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
                 ytdl.StartInfo.CreateNoWindow = true;
+                ytdl.StartInfo.RedirectStandardOutput = true;
+                ytdl.StartInfo.RedirectStandardError = true;
             }
 
             // Set Start time and End time
-            if (video.StartTime != null || video.EndTime != null) {
-
-                // Defined Start to Defined End
-                if (video.StartTime != null && video.EndTime != null) {
-                    output = $"{outDir}\\%(title)s_temp.%(ext)s";
-                    if (Config.Settings.OnlyDownloadSegment) {
-                        string[] startTimeParts = video.StartTime.Split(':');
-                        TimeSpan startTime = new(Convert.ToInt32((startTimeParts.Length > 2) ? startTimeParts[^3] : 0), Convert.ToInt32(startTimeParts[^2]), Convert.ToInt32(startTimeParts[^1]));
-                        string startTimePadded = startTime.Subtract(TimeSpan.FromSeconds(8)).ToString();
-                        if (startTimePadded.Contains('-'))
-                            startTimePadded = "00:00";
-
-                        string[] endTimeParts = video.EndTime.Split(':');
-                        TimeSpan endTime = new(Convert.ToInt32((endTimeParts.Length > 2) ? endTimeParts[^3] : 0), Convert.ToInt32(endTimeParts[^2]), Convert.ToInt32(endTimeParts[^1]));
-                        TimeSpan duration = endTime.Subtract(startTime);
-
-                        ytdl.StartInfo.Arguments += $" --external-downloader ffmpeg --external-downloader-args \"ffmpeg_i:-ss {startTimePadded} -to {video.EndTime}\" ";
-                        ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -sseof -{duration} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
-                    }
-                    else
-                        ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -ss {video.StartTime} -to {video.EndTime} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
-                    ytdl.StartInfo.Arguments += $" --exec \"del %(filepath)q\" ";
-                }
-
-                // Beginning to Defined End
-                else if (video.StartTime == null && video.EndTime != null) {
-                    if (Config.Settings.OnlyDownloadSegment)
-                        ytdl.StartInfo.Arguments += $" --external-downloader ffmpeg --external-downloader-args \"ffmpeg_i:-ss 00:00 -to {video.EndTime}\" ";
-                    else {
-                        output = $"{outDir}\\%(title)s_temp.%(ext)s";
-                        ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -ss 00:00 -to {video.EndTime} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
-                        ytdl.StartInfo.Arguments += $" --exec \"del %(filepath)q\" ";
-                    }
-                }
-
-                // Defined Start to Actual End
-                else if (video.StartTime != null && video.EndTime == null) {
-                    string[] startTimeParts = video.StartTime.Split(':');
-                    TimeSpan startTime = new(Convert.ToInt32((startTimeParts.Length > 2) ? startTimeParts[^3] : 0), Convert.ToInt32(startTimeParts[^2]), Convert.ToInt32(startTimeParts[^1]));
-                    string startTimePadded = startTime.Subtract(TimeSpan.FromSeconds(8)).ToString();
-                    if (startTimePadded.Contains('-'))
-                        startTimePadded = "00:00";
-
-                    output = $"{outDir}\\%(title)s_temp.%(ext)s";
-                    if (Config.Settings.OnlyDownloadSegment)
-                        ytdl.StartInfo.Arguments += $" --external-downloader ffmpeg --external-downloader-args \"ffmpeg_i:-ss {startTimePadded}\" ";
-                    ytdl.StartInfo.Arguments += $" --exec \"ffmpeg.exe -y -ss {video.StartTime} -i %(filepath)q \\\"{outDir}\\%(title)s.%(ext)s\\\" \" ";
-                    ytdl.StartInfo.Arguments += $" --exec \"del %(filepath)q\" ";
-                }
-            }
+            if (video.StartTime != null || video.EndTime != null)
+                ytdl.StartInfo.Arguments += $" --download-sections \"*{video.StartTime ?? "00:00"}-{video.EndTime ?? "inf"}\" ";
 
             switch (video.Site) {
                 case "YouTube":
@@ -334,25 +287,25 @@ namespace YouTubeStuff {
                     if (Config.Settings.ExportType == 0) {
                         // Original
                         if (Config.Settings.ExportFormatVideo == 0)
-                            ytdl.StartInfo.Arguments += $"--format bestvideo+bestaudio {video.Link} -o \"{output}\"";
+                            ytdl.StartInfo.Arguments += $" --format bestvideo+bestaudio {video.Link} -o \"{output}\"";
 
                         // MP4
                         else if (Config.Settings.ExportFormatVideo == 1)
-                            ytdl.StartInfo.Arguments += $"--format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 --postprocessor-args \"-vcodec libx264 -acodec aac\" {video.Link} -o \"{output}\"";
+                            ytdl.StartInfo.Arguments += $" --format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 --postprocessor-args \"-vcodec libx264 -acodec aac\" {video.Link} -o \"{output}\"";
                     }
                     //Audio
                     else if (Config.Settings.ExportType == 1) {
                         // FLAC
                         if (Config.Settings.ExportFormatAudio == 0)
-                            ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format flac {video.Link} -o \"{output}\"";
+                            ytdl.StartInfo.Arguments += $" -f bestaudio -x --audio-format flac {video.Link} -o \"{output}\"";
 
                         // WAV
                         else if (Config.Settings.ExportFormatAudio == 1)
-                            ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format wav {video.Link} -o \"{output}\"";
+                            ytdl.StartInfo.Arguments += $" -f bestaudio -x --audio-format wav {video.Link} -o \"{output}\"";
 
                         // MP3
                         else if (Config.Settings.ExportFormatAudio == 2)
-                            ytdl.StartInfo.Arguments += $"-f bestaudio -x --audio-format mp3 {video.Link} -o \"{output}\"";
+                            ytdl.StartInfo.Arguments += $" -f bestaudio -x --audio-format mp3 {video.Link} -o \"{output}\"";
                     }
                     break;
 
@@ -363,6 +316,51 @@ namespace YouTubeStuff {
             }
 
             ytdl.Start();
+
+            string line = "";
+            try {
+                while (!ytdl.StandardOutput.EndOfStream) {
+                    char character = (char)ytdl.StandardOutput.Read();
+                    line += character;
+                    Console.Write(character);
+                    if (character == '\n')
+                        line = "";
+                    if (character == '\r') {
+                        if (line.Contains("% of")) {
+                            string lineCutFront = line[(line.IndexOf(']') + 1)..];
+                            string linefinal = lineCutFront[..lineCutFront.IndexOf('%')];
+                            if (double.TryParse(linefinal.Trim(), out double currentPercent))
+                                progress?.Report((int)currentPercent);
+                        }
+                        line = "";
+                    }
+                }
+            }
+            catch { }
+
+            // this doesnt work idk
+            /*
+            try {
+                while (!ytdl.StandardError.EndOfStream) {
+                    char character = (char)ytdl.StandardOutput.Read();
+                    line += character;
+                    Console.Write(character);
+                    if (character == '\n')
+                        line = "";
+                    if (character == '\r') {
+                        if (line.Contains("time=")) {
+                            string lineCutFront = line[(line.IndexOf("time=") + 1)..];
+                            string linefinal = lineCutFront[..lineCutFront.IndexOf('b')];
+                            if (Video.TryParseSeconds(linefinal.Trim(), out double currentSeconds))
+                                progress?.Report((int)(currentSeconds / video.Duration));
+                        }
+                        line = "";
+                    }
+                }
+            }
+            catch { }
+            */
+
             ytdl.WaitForExit();
         }
 
@@ -381,7 +379,7 @@ namespace YouTubeStuff {
 
         private void ButtonClipboard_Click(object sender, RoutedEventArgs e) {
             Video video = VideoListBox.SelectedItem as Video;
-            IDataObject data = new DataObject();
+            DataObject data = new();
             data.SetData(DataFormats.Bitmap, new BitmapImage(new Uri(video.Thumbnail)), true);
             Clipboard.SetDataObject(data, true);
         }
@@ -422,9 +420,9 @@ namespace YouTubeStuff {
 
         private async void ListBoxDownloadVideo_Click(object sender, RoutedEventArgs e) {
             Video video;
-            if (sender is Video) 
+            if (sender is Video)
                 video = sender as Video;
-            else 
+            else
                 video = ((Button)sender).DataContext as Video;
 
             Mouse.OverrideCursor = Cursors.Wait;
@@ -432,17 +430,17 @@ namespace YouTubeStuff {
 
             IProgress<int> progress = new Progress<int>(p => {
                 ProgressBar.Value = p;
-                ProgressBar.Maximum = 12;
-                TaskbarItemInfo.ProgressValue = (double)p / 12;
+                ProgressBar.Maximum = 100;
+                TaskbarItemInfo.ProgressValue = (double)p / 100;
             });
 
-            progress.Report(1); 
+            progress.Report(2);
             ProgressBar.Visibility = Visibility.Visible;
             TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Normal;
             await Task.Run(async () => {
-                Download(video);
-                progress.Report(12);
-                await Task.Delay(200);
+                Download(video, progress);
+                progress.Report(100);
+                await Task.Delay(100);
             });
             ProgressBar.Visibility = Visibility.Collapsed;
             TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
@@ -465,18 +463,13 @@ namespace YouTubeStuff {
                 FormatAudioComboBox.Visibility = Visibility.Visible;
             }
         }
-        public bool IsValidImage(string url) {
-            HttpClient client = new();
-            using HttpResponseMessage response = client.Send(new(HttpMethod.Head, new Uri(url)));
-            return response.StatusCode == HttpStatusCode.OK;
-        }
 
-        private void LiveValidationTextBox(object sender, TextCompositionEventArgs e) {
-            Regex regex = new("[^0-9:]+");
-            e.Handled = regex.IsMatch(e.Text);
-        }
 
-        private void FinalValidationTextBox (object sender, RoutedEventArgs e) {
+        [GeneratedRegex("[^0-9:]+")]
+        private static partial Regex TimeRegex();
+        private void LiveValidationTextBox(object sender, TextCompositionEventArgs e) => e.Handled = TimeRegex().IsMatch(e.Text);
+
+        private void FinalValidationTextBox(object sender, RoutedEventArgs e) {
             TextBox text = sender as TextBox;
             if (text.Text.Length == 1) text.Text = $"0{text.Text}";
             if (TimeSpan.TryParseExact(text.Text, @"ss", System.Globalization.CultureInfo.CurrentCulture, out _))

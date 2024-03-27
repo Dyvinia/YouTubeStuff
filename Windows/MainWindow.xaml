@@ -148,7 +148,7 @@
                                             
                                             <Grid Width="36">
                                                 <TextBox x:Name="EndTimeBox" Text="{Binding EndTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" PreviewTextInput="LiveValidationTextBox" LostFocus="FinalValidationTextBox" />
-                                                <TextBlock IsHitTestVisible="False" Text="xx:xx" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.25">
+                                                <TextBlock IsHitTestVisible="False" Text="{Binding DurationString}" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.25">
                                                     <TextBlock.Style>
                                                         <Style TargetType="{x:Type TextBlock}">
                                                             <Setter Property="Visibility" Value="Collapsed"/>

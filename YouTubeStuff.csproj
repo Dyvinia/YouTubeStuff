@@ -2,13 +2,12 @@
 
   <PropertyGroup>
 	  <OutputType>WinExe</OutputType>
-	  <TargetFramework>net7.0-windows</TargetFramework>
-	  <Nullable>disable</Nullable>
+	  <TargetFramework>net8.0-windows</TargetFramework>
 	  <UseWPF>true</UseWPF>
 
 	  <AssemblyName>YouTubeStuff</AssemblyName>
-	  <Version>1.7.3</Version>
-	  <Copyright>Copyright © 2023 Dyvinia</Copyright>
+	  <Version>1.8.0</Version>
+	  <Copyright>Copyright © 2024 Dyvinia</Copyright>
 	  <Company>Dyvinia</Company>
 	  <ApplicationIcon>Resources\Icon.ico</ApplicationIcon>
   </PropertyGroup>

@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -23,7 +21,6 @@ namespace YouTubeStuff {
         public bool UpdateChecker { get; set; } = true;
         public bool ShowWindows { get; set; } = false;
         public bool PasteOnStartup { get; set; } = true;
-        public bool OnlyDownloadSegment { get; set; } = false;
 
         public string AdditionalArgs { get; set; } = "";
         public string OutDir { get; set; } = App.BaseDir + "Output";
