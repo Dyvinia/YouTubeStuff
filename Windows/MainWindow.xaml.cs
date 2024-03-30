@@ -271,11 +271,14 @@ namespace YouTubeStuff {
                 ytdl.StartInfo.CreateNoWindow = true;
                 ytdl.StartInfo.RedirectStandardOutput = true;
                 ytdl.StartInfo.RedirectStandardError = true;
+                ytdl.EnableRaisingEvents = true;
             }
 
             // Set Start time and End time
-            if (video.StartTime != null || video.EndTime != null)
+            if (video.StartTime != null || video.EndTime != null) {
+                output = $"{outDir}\\%(title)s.cut.%(ext)s";
                 ytdl.StartInfo.Arguments += $" --download-sections \"*{video.StartTime ?? "00:00"}-{video.EndTime ?? "inf"}\" ";
+            }
 
             switch (video.Site) {
                 case "YouTube":
@@ -316,7 +319,20 @@ namespace YouTubeStuff {
             }
 
             ytdl.Start();
+            
+            // cut video's download progress
+            ytdl.BeginErrorReadLine();
+            ytdl.ErrorDataReceived += (s, e) => {
+                string line = e.Data;
+                if (line?.Contains("time=") ?? false) {
+                    string lineCutFront = line[(line.IndexOf("time=") + 5)..];
+                    string linefinal = lineCutFront[..lineCutFront.IndexOf('b')];
+                    if (Video.TryParseSeconds(linefinal.Trim(), out double currentSeconds))
+                        progress?.Report((int)(currentSeconds * 100d / video.Duration));
+                }
+            };
 
+            // video download progress
             string line = "";
             try {
                 while (!ytdl.StandardOutput.EndOfStream) {
@@ -337,29 +353,6 @@ namespace YouTubeStuff {
                 }
             }
             catch { }
-
-            // this doesnt work idk
-            /*
-            try {
-                while (!ytdl.StandardError.EndOfStream) {
-                    char character = (char)ytdl.StandardOutput.Read();
-                    line += character;
-                    Console.Write(character);
-                    if (character == '\n')
-                        line = "";
-                    if (character == '\r') {
-                        if (line.Contains("time=")) {
-                            string lineCutFront = line[(line.IndexOf("time=") + 1)..];
-                            string linefinal = lineCutFront[..lineCutFront.IndexOf('b')];
-                            if (Video.TryParseSeconds(linefinal.Trim(), out double currentSeconds))
-                                progress?.Report((int)(currentSeconds / video.Duration));
-                        }
-                        line = "";
-                    }
-                }
-            }
-            catch { }
-            */
 
             ytdl.WaitForExit();
         }
