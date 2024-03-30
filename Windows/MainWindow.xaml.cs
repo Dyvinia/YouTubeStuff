@@ -424,7 +424,7 @@ namespace YouTubeStuff {
             IProgress<int> progress = new Progress<int>(p => {
                 ProgressBar.Value = p;
                 ProgressBar.Maximum = 100;
-                TaskbarItemInfo.ProgressValue = (double)p / 100;
+                TaskbarItemInfo.ProgressValue = p / 100d;
             });
 
             progress.Report(2);
@@ -465,6 +465,7 @@ namespace YouTubeStuff {
         private void FinalValidationTextBox(object sender, RoutedEventArgs e) {
             TextBox text = sender as TextBox;
             if (text.Text.Length == 1) text.Text = $"0{text.Text}";
+            if (text.Text.EndsWith(':')) text.Text = $"{text.Text}00";
             if (TimeSpan.TryParseExact(text.Text, @"ss", System.Globalization.CultureInfo.CurrentCulture, out _))
                 text.Text = $"00:{text.Text}";
             else if (TimeSpan.TryParseExact(text.Text, @"m\:ss", System.Globalization.CultureInfo.CurrentCulture, out _) && !TimeSpan.TryParseExact(text.Text, @"mm\:ss", System.Globalization.CultureInfo.CurrentCulture, out _))
