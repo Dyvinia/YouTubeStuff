@@ -298,16 +298,20 @@ namespace YouTubeStuff {
                     }
                     //Audio
                     else if (Config.Settings.ExportType == 1) {
-                        // FLAC
+                        // Original
                         if (Config.Settings.ExportFormatAudio == 0)
+                            ytdl.StartInfo.Arguments += $" -f bestaudio {video.Link} -o \"{output}\"";
+                        
+                        // FLAC
+                        if (Config.Settings.ExportFormatAudio == 1)
                             ytdl.StartInfo.Arguments += $" -f bestaudio -x --audio-format flac {video.Link} -o \"{output}\"";
 
                         // WAV
-                        else if (Config.Settings.ExportFormatAudio == 1)
+                        else if (Config.Settings.ExportFormatAudio == 2)
                             ytdl.StartInfo.Arguments += $" -f bestaudio -x --audio-format wav {video.Link} -o \"{output}\"";
 
                         // MP3
-                        else if (Config.Settings.ExportFormatAudio == 2)
+                        else if (Config.Settings.ExportFormatAudio == 3)
                             ytdl.StartInfo.Arguments += $" -f bestaudio -x --audio-format mp3 {video.Link} -o \"{output}\"";
                     }
                     break;
