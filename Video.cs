@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using YouTubeStuff.Utils.Format;
 
 namespace YouTubeStuff {
     public class Video {
@@ -10,6 +12,10 @@ namespace YouTubeStuff {
         public string Playlist { get; set; }
         public string StartTime { get; set; }
         public string EndTime { get; set; }
+
+        public List<VideoFormat> Formats { get; set; }
+        public int SelectedFormatIndex { get; set; } = 0;
+        public VideoFormat SelectedFormat => Formats[SelectedFormatIndex];
 
         public double Duration { get; set; }
         public string DurationString { 

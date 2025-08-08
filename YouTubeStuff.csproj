@@ -6,8 +6,8 @@
 	  <UseWPF>true</UseWPF>
 
 	  <AssemblyName>YouTubeStuff</AssemblyName>
-	  <Version>1.8.0</Version>
-	  <Copyright>Copyright © 2024 Dyvinia</Copyright>
+	  <Version>1.9.0</Version>
+	  <Copyright>Copyright © 2025 Dyvinia</Copyright>
 	  <Company>Dyvinia</Company>
 	  <ApplicationIcon>Resources\Icon.ico</ApplicationIcon>
   </PropertyGroup>

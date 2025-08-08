@@ -18,6 +18,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shell;
 using Microsoft.Win32;
 using Newtonsoft.Json;
+using YouTubeStuff.Utils.Format;
 
 namespace YouTubeStuff {
     /// <summary>
@@ -150,7 +151,28 @@ namespace YouTubeStuff {
                     string thumbnailURL = rootElement.GetProperty("thumbnail").GetString();
                     rootElement.TryGetProperty("duration", out JsonElement duration);
 
-                    orderedVideos.TryAdd(index, new() { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Duration = duration.GetDouble(), Site = "YouTube", Playlist = link.Playlist });
+                    rootElement.TryGetProperty("formats", out JsonElement formats);
+                    List<VideoFormat> videoFormats = [];
+                    foreach (JsonElement format in formats.EnumerateArray().Where(f => (f.TryGetProperty("video_ext", out JsonElement formatExt) && formatExt.GetString() != "none") && (f.TryGetProperty("protocol", out JsonElement protocol) && protocol.GetString().Contains("m3u8")))) {
+                        format.TryGetProperty("filesize", out JsonElement fileSizeProp);
+
+                        int fileSize;
+                        if (fileSizeProp.ValueKind == JsonValueKind.Undefined)
+                            fileSize = (int)(format.GetProperty("tbr").GetDouble() * 125 * duration.GetDouble());
+                        else
+                            fileSize = fileSizeProp.GetInt32();
+
+                        videoFormats.Add(new() {
+                            Id = format.GetProperty("format_id").GetString(),
+                            Format = format.GetProperty("format").GetString().Split('-')[1].Trim(),
+                            Extension = format.GetProperty("ext").GetString(),
+                            Codec = format.GetProperty("vcodec").GetString(),
+                            Filesize = fileSize
+                        });
+                    }
+                    videoFormats.Reverse();
+
+                    orderedVideos.TryAdd(index, new() { Title = videoTitle, Link = link.URL, Thumbnail = thumbnailURL, Duration = duration.GetDouble(), Site = "YouTube", Playlist = link.Playlist, Formats = videoFormats });
                 }
 
                 // Twitter
@@ -290,11 +312,11 @@ namespace YouTubeStuff {
                     if (Config.Settings.ExportType == 0) {
                         // Original
                         if (Config.Settings.ExportFormatVideo == 0)
-                            ytdl.StartInfo.Arguments += $" --format bestvideo+bestaudio {video.Link} -o \"{output}\"";
+                            ytdl.StartInfo.Arguments += $" --format {video.SelectedFormat.Id}+bestaudio {video.Link} -o \"{output}\"";
 
                         // MP4
                         else if (Config.Settings.ExportFormatVideo == 1)
-                            ytdl.StartInfo.Arguments += $" --format \"bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best\" --merge-output-format mp4 --postprocessor-args \"-vcodec libx264 -acodec aac\" {video.Link} -o \"{output}\"";
+                            ytdl.StartInfo.Arguments += $" --format \"{video.SelectedFormat.Id}+bestaudio[ext=m4a]/{video.SelectedFormat.Id}+bestaudio/best\" --merge-output-format mp4 --postprocessor-args \"-vcodec libx264 -acodec aac\" {video.Link} -o \"{output}\"";
                     }
                     //Audio
                     else if (Config.Settings.ExportType == 1) {

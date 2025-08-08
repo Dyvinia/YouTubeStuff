@@ -48,10 +48,12 @@ namespace YouTubeStuff {
         }
 
         protected override async void OnStartup(StartupEventArgs e) {
-            new MainWindow().Show();
+            MainWindow mw = new();
 
             if (await CheckUtils())
                 new DownloadWindow().ShowDialog();
+
+            mw.Show();
 
             if (Config.Settings.UpdateChecker)
                 await CheckVersion("Dyvinia", "YouTubeStuff");

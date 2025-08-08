@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:YouTubeStuff"
         mc:Ignorable="d"
         Title="YoutubeStuff"
-        Width="700" SizeToContent="Height" UseLayoutRounding="True"
+        Width="750" SizeToContent="Height" UseLayoutRounding="True"
         WindowStartupLocation="CenterScreen"
         Icon="/Resources/Icon.ico"
         Style="{DynamicResource CustomWindowStyle}" ResizeMode="CanMinimize" >
@@ -23,7 +23,7 @@
             </Grid.RowDefinitions>
             <Grid Grid.Row="1" Margin="25 0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="500"/>
+                    <ColumnDefinition Width="550"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid Grid.Column="0">
@@ -122,13 +122,28 @@
                                         <ColumnDefinition Width="2"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Grid Grid.Column="0" Height="24" Width="40">
-                                        <Image Source="{Binding Thumbnail}" Margin="1" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <Grid Grid.Column="0" Height="48" Width="85">
+                                        <Image Source="{Binding Thumbnail}" Margin="1" RenderOptions.BitmapScalingMode="Fant"/>
                                     </Grid>
-                                    <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="4 0 0 0" VerticalAlignment="Center" TextWrapping="NoWrap" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="4 0 4 2" VerticalAlignment="Center" TextWrapping="Wrap" />
 
-                                    <Grid Grid.Column="2" Height="20">
-                                        <StackPanel Orientation="Horizontal">
+                                    <Grid Grid.Column="2" >
+                                        <StackPanel Orientation="Vertical" Width="130" VerticalAlignment="Center">
+                                            <ComboBox Visibility="Visible" Height="36" ItemsSource="{Binding Formats}" SelectedIndex="{Binding SelectedFormatIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Path=SelectedItem, RelativeSource={RelativeSource Self}}" ScrollViewer.CanContentScroll="False" >
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Vertical" ToolTip="{Binding Key}" Margin="0 1" Width="105">
+                                                            <TextBlock Text="{Binding FormatText}" FontSize="11" HorizontalAlignment="Left" Width="115"/>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding CodecClean}" FontSize="10" Margin="1 -1 0 1"/>
+                                                                <TextBlock Text="{Binding FilesizeText}" FontSize="9" Foreground="Gray" Margin="3 0 0 1"/>
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Visibility="Collapsed">
                                             <Grid Width="36">
                                                 <TextBox x:Name="StartTimeBox" Text="{Binding StartTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" PreviewTextInput="LiveValidationTextBox" LostFocus="FinalValidationTextBox" />
                                                 <TextBlock IsHitTestVisible="False" Text="00:00" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.25">
