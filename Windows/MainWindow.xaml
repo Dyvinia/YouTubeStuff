@@ -17,7 +17,7 @@
         <Grid Background="#FF141414" Margin="5">
             <Grid.RowDefinitions>
                 <RowDefinition Height="15"/>
-                <RowDefinition Height="90"/>
+                <RowDefinition Height="135"/>
                 <RowDefinition Height="20"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
@@ -28,8 +28,8 @@
                 </Grid.ColumnDefinitions>
                 <Grid Grid.Column="0">
                     <TextBlock TextWrapping="Wrap" Text="Video Links" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
-                    <TextBox x:Name="LinkBox" Height="70" VerticalAlignment="Bottom" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" TextWrapping="Wrap"/>
-                    <TextBlock IsHitTestVisible="False" Text="Paste Here..." Height="68" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="4,0,0,0" Opacity="0.25">
+                    <TextBox x:Name="LinkBox" Height="115" VerticalAlignment="Bottom" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" TextWrapping="Wrap"/>
+                    <TextBlock IsHitTestVisible="False" Text="Paste Here..." Height="113" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="4,0,0,0" Opacity="0.25">
                         <TextBlock.Style>
                             <Style TargetType="{x:Type TextBlock}">
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -43,7 +43,7 @@
                     </TextBlock>
                 </Grid>
                 <Grid Grid.Column="1">
-                    <DockPanel Margin="15 0 0 0">
+                    <StackPanel Orientation="Vertical" Margin="15 0 0 0">
                         <StackPanel Orientation="Vertical" DockPanel.Dock="Top">
                             <TextBlock TextWrapping="Wrap" Text="Export As" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
                             <ComboBox x:Name="ExtensionComboBox" SelectedIndex="{Binding Path=(local:Config.ExportType), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="Only applies to YouTube Videos">
@@ -51,7 +51,7 @@
                                 <ComboBoxItem Content="Audio"/>
                             </ComboBox>
                         </StackPanel>
-                        <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
+                        <StackPanel Orientation="Vertical" Margin="0 5 0 0">
                             <TextBlock TextWrapping="Wrap" Text="File Format" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
                             <Grid>
                                 <ComboBox x:Name="FormatVideoComboBox" Visibility="Visible" SelectedIndex="{Binding Path=(local:Config.ExportFormatVideo), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="Only applies to YouTube Videos">
@@ -65,9 +65,16 @@
                                     <ComboBoxItem Content="MP3"/>
                                 </ComboBox>
                             </Grid>
-                            
                         </StackPanel>
-                    </DockPanel>
+                        <StackPanel Orientation="Vertical" Margin="0 4 0 0">
+                            <TextBlock TextWrapping="Wrap" Text="Subtitles" Foreground="#FFF1F1F1" FontSize="14" Height="20" FontWeight="Bold" VerticalAlignment="Top"/>
+                            <ComboBox x:Name="SubtitlesComboBox" SelectedIndex="{Binding Path=(local:Config.Subtitles), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="Only applies to YouTube Videos">
+                                <ComboBoxItem Content="None"/>
+                                <ComboBoxItem Content="Embed"/>
+                                <ComboBoxItem Content="Burn"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </StackPanel>
                 </Grid>
                
             </Grid>

@@ -45,9 +45,11 @@ namespace YouTubeStuff {
             ExtensionComboBox.SelectionChanged += ExtensionComboBox_SelectionChanged; ;
             FormatAudioComboBox.SelectionChanged += (s, e) => Config.Save();
             FormatVideoComboBox.SelectionChanged += (s, e) => Config.Save();
+            SubtitlesComboBox.SelectionChanged += (s, e) => Config.Save();
             ExtensionComboBox.DataContext = Config.Settings;
             FormatAudioComboBox.DataContext = Config.Settings;
             FormatVideoComboBox.DataContext = Config.Settings;
+            SubtitlesComboBox.DataContext = Config.Settings;
 
             ImageThumbnail.MouseDown += (s, e) => Process.Start(new ProcessStartInfo((VideoListBox.SelectedItem as Video).Thumbnail) { UseShellExecute = true });
 
@@ -153,7 +155,7 @@ namespace YouTubeStuff {
 
                     rootElement.TryGetProperty("formats", out JsonElement formats);
                     List<VideoFormat> videoFormats = [];
-                    foreach (JsonElement format in formats.EnumerateArray().Where(f => (f.TryGetProperty("video_ext", out JsonElement formatExt) && formatExt.GetString() != "none") && (f.TryGetProperty("protocol", out JsonElement protocol) && protocol.GetString().Contains("m3u8")))) {
+                    foreach (JsonElement format in formats.EnumerateArray().Where(f => (f.TryGetProperty("video_ext", out JsonElement formatExt) && formatExt.GetString() != "none"))) {
                         format.TryGetProperty("filesize", out JsonElement fileSizeProp);
 
                         int fileSize;
@@ -289,7 +291,7 @@ namespace YouTubeStuff {
             }
             else {
                 ytdl.StartInfo.FileName = Config.Settings.UtilsDir + "yt-dlp.exe";
-                ytdl.StartInfo.Arguments += $" {Config.Settings.AdditionalArgs} ";
+                ytdl.StartInfo.Arguments += $"{Config.Settings.AdditionalArgs} ";
                 ytdl.StartInfo.CreateNoWindow = true;
                 ytdl.StartInfo.RedirectStandardOutput = true;
                 ytdl.StartInfo.RedirectStandardError = true;
@@ -301,6 +303,7 @@ namespace YouTubeStuff {
                 output = $"{outDir}\\%(title)s.cut.%(ext)s";
                 ytdl.StartInfo.Arguments += $" --download-sections \"*{video.StartTime ?? "00:00"}-{video.EndTime ?? "inf"}\" ";
             }
+            ytdl.StartInfo.Arguments += " --replace-in-metadata \"title\" \"[ &|:<>?*]\" \"_\" --replace-in-metadata \"title\" \"[^\\x00-\\x7F]\" \"\" ";
 
             switch (video.Site) {
                 case "YouTube":
@@ -310,13 +313,21 @@ namespace YouTubeStuff {
 
                     // Video
                     if (Config.Settings.ExportType == 0) {
+                        string subs = string.Empty;
+                        if (Config.Settings.Subtitles == 1) {
+                            subs = "--sub-format srt --convert-subs srt --embed-subs";
+                        }
+                        else if (Config.Settings.Subtitles == 2) {
+                            subs = $"--sub-format srt --convert-subs srt --embed-subs --exec \"ffmpeg -y -i \\\"{output}\\\" -vf \\\"subtitles='{output.Replace("\\", "\\\\\\\\").Replace(":", "\\:")}':si=0:force_style='Fontname=Roboto,Fontsize={Config.Settings.SubtitleFontSize}'\\\" -c:a copy \\\"{output}.subs.%(ext)s\\\"\"";
+                        }
+
                         // Original
                         if (Config.Settings.ExportFormatVideo == 0)
-                            ytdl.StartInfo.Arguments += $" --format {video.SelectedFormat.Id}+bestaudio {video.Link} -o \"{output}\"";
+                            ytdl.StartInfo.Arguments += $" --format {video.SelectedFormat.Id}+bestaudio {subs} {video.Link} -o \"{output}\"";
 
                         // MP4
                         else if (Config.Settings.ExportFormatVideo == 1)
-                            ytdl.StartInfo.Arguments += $" --format \"{video.SelectedFormat.Id}+bestaudio[ext=m4a]/{video.SelectedFormat.Id}+bestaudio/best\" --merge-output-format mp4 --postprocessor-args \"-vcodec libx264 -acodec aac\" {video.Link} -o \"{output}\"";
+                            ytdl.StartInfo.Arguments += $" --format \"{video.SelectedFormat.Id}+bestaudio[ext=m4a]/{video.SelectedFormat.Id}+bestaudio/best\" --merge-output-format mp4 --postprocessor-args \"-vcodec libx264 -acodec aac\" {subs} {video.Link} -o \"{output}\"";
                     }
                     //Audio
                     else if (Config.Settings.ExportType == 1) {
@@ -345,18 +356,21 @@ namespace YouTubeStuff {
             }
 
             ytdl.Start();
-            
+
             // cut video's download progress
-            ytdl.BeginErrorReadLine();
-            ytdl.ErrorDataReceived += (s, e) => {
-                string line = e.Data;
-                if (line?.Contains("time=") ?? false) {
-                    string lineCutFront = line[(line.IndexOf("time=") + 5)..];
-                    string linefinal = lineCutFront[..lineCutFront.IndexOf('b')];
-                    if (Video.TryParseSeconds(linefinal.Trim(), out double currentSeconds))
-                        progress?.Report((int)(currentSeconds * 100d / video.Duration));
-                }
-            };
+            try {
+                ytdl.BeginErrorReadLine();
+                ytdl.ErrorDataReceived += (s, e) => {
+                    string line = e.Data;
+                    if (line?.Contains("time=") ?? false) {
+                        string lineCutFront = line[(line.IndexOf("time=") + 5)..];
+                        string linefinal = lineCutFront[..lineCutFront.IndexOf('b')];
+                        if (Video.TryParseSeconds(linefinal.Trim(), out double currentSeconds))
+                            progress?.Report((int)(currentSeconds * 100d / video.Duration));
+                    }
+                };
+            }
+            catch { }
 
             // video download progress
             string line = "";
@@ -476,10 +490,12 @@ namespace YouTubeStuff {
             if (Config.Settings.ExportType == 0) {
                 FormatVideoComboBox.Visibility = Visibility.Visible;
                 FormatAudioComboBox.Visibility = Visibility.Collapsed;
+                SubtitlesComboBox.Visibility = Visibility.Visible;
             }
             else if (Config.Settings.ExportType == 1) {
                 FormatVideoComboBox.Visibility = Visibility.Collapsed;
                 FormatAudioComboBox.Visibility = Visibility.Visible;
+                SubtitlesComboBox.Visibility = Visibility.Collapsed;
             }
         }
 
