@@ -159,8 +159,8 @@ namespace YouTubeStuff {
                         format.TryGetProperty("filesize", out JsonElement fileSizeProp);
 
                         int fileSize;
-                        if (fileSizeProp.ValueKind == JsonValueKind.Undefined)
-                            fileSize = (int)(format.GetProperty("tbr").GetDouble() * 125 * duration.GetDouble());
+                        if (fileSizeProp.ValueKind == JsonValueKind.Null || fileSizeProp.ValueKind == JsonValueKind.Undefined)
+                            fileSize = (int)(format.GetProperty("tbr").GetDouble() * 125 * duration.GetDouble()) * -1; // too lazy to properly add approx prefix
                         else
                             fileSize = fileSizeProp.GetInt32();
 

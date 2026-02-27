@@ -37,15 +37,22 @@ namespace YouTubeStuff.Utils.Format {
         public int Filesize { get; set; }
         public string FilesizeText {
             get {
-                if (Filesize > 0) {
-                    if (Filesize < 1024)
-                        return $"{Filesize} B";
-                    else if (Filesize < 1024 * 1024)
-                        return $"{Filesize / 1024.0:0.00}KB";
-                    else if (Filesize < 1024 * 1024 * 1024)
-                        return $"{Filesize / (1024.0 * 1024.0):0.00}MB";
+                string prefix = string.Empty;
+                int size = Filesize;
+                if (size < 0) {
+                    size *= -1;
+                    prefix = "~";
+                }
+                    
+                if (size > 0) {
+                    if (size < 1024)
+                        return $"{prefix}{size} B";
+                    else if (size < 1024 * 1024)
+                        return $"{prefix}{size / 1024.0:0.00}KB";
+                    else if (size < 1024 * 1024 * 1024)
+                        return $"{prefix}{size / (1024.0 * 1024.0):0.00}MB";
                     else
-                        return $"{Filesize / (1024.0 * 1024.0 * 1024.0):0.00}GB";
+                        return $"{prefix}{size / (1024.0 * 1024.0 * 1024.0):0.00}GB";
                 }
                 return "Unknown Size";
             }
